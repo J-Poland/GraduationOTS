@@ -3,7 +3,7 @@ import pandas as pd
 import os
 import matplotlib.pyplot as plt
 import seaborn as sns
-from ots_models.ots_vehicle_automation_model import MyShortMergeModel
+from ots_models.ots_vehicle_automation_model import VehicleAutomationModel
 
 
 # run EMA-Workbench experiment
@@ -21,7 +21,7 @@ if __name__ == '__main__':
     print(f'Simulation of the {experiment_name} experiment has started:\n')
 
     # create runnable OpenTrafficSim model
-    ots_model = MyShortMergeModel(experiment_name=experiment_name, seed=seed, user_feedback=True)
+    ots_model = VehicleAutomationModel(experiment_name=experiment_name, seed=seed, user_feedback=True)
 
     # compile OTS project
     ots_model.compile_project()

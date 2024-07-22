@@ -19,6 +19,7 @@ class JavaManager:
         self.classpath = None
         self.java_class_name = None
         self.output = None
+        self.original_os_dir = None
 
     # function to print or suppress user feedback
     def print_feedback(self, message, always_show=False):
@@ -30,6 +31,10 @@ class JavaManager:
     def compile(self, classpath_file_path):
         # set Java strings
         java_compiler = 'javac'
+
+        # save current directory
+        # this will be changed due to the location of the Java classpath, so store this value to be able to restore it
+        self.original_os_dir = os.getcwd()
 
         # get classpath from Maven project
         # run project as Maven project

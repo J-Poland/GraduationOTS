@@ -8,6 +8,7 @@ import java.util.function.BiFunction;
 import org.djunits.unit.AccelerationUnit;
 import org.djunits.unit.SpeedUnit;
 import org.djunits.value.vdouble.scalar.Acceleration;
+import org.djunits.value.vdouble.scalar.Duration;
 import org.djunits.value.vdouble.scalar.Length;
 import org.djunits.value.vdouble.scalar.Speed;
 import org.djutils.immutablecollections.Immutable;
@@ -118,15 +119,34 @@ public class VehicleConfigurations extends Defaults implements BiFunction<GtuTyp
 		ParameterFactoryByType paramFactory = new ParameterFactoryByType();
 		
 		// Set parameters for HDV
-		paramFactory.addParameter(hdvCar, ParameterTypes.FSPEED, new DistNormal(stream, 123.7 / 120, 12.0 / 120));
-		paramFactory.addParameter(hdvCar, LmrsParameters.SOCIO, new DistNormal(stream, 0.5, 0.1));
-		paramFactory.addParameter(hdvCar, Tailgating.RHO, 0.1);
+		// speed limit adherence
+		paramFactory.addParameter(hdvCar, ParameterTypes.FSPEED, new DistNormal(stream, 1, 13.0 / 130));
+		// headway
+		paramFactory.addParameter(hdvCar, ParameterTypes.TMAX, Duration.instantiateSI(1.2));
+		paramFactory.addParameter(hdvCar, ParameterTypes.TMIN, Duration.instantiateSI(0.56));
+		// reaction time
+		paramFactory.addParameter(hdvCar, ParameterTypes.TR, Duration.instantiateSI(1.5));
+		// lookahead and lookback
+		paramFactory.addParameter(hdvCar, ParameterTypes.LOOKAHEAD, Length.instantiateSI(295.0));
+		paramFactory.addParameter(hdvCar, ParameterTypes.LOOKBACK, Length.instantiateSI(200.0));
+		// affected by other vehicle speed
+		paramFactory.addParameter(hdvCar, LmrsParameters.SOCIO, new DistNormal(stream, 0.5, 0.1)); 
+		paramFactory.addParameter(hdvCar, Tailgating.RHO, 0.6);
 		
 		// Set parameters for AV
-		paramFactory.addParameter(avCar, ParameterTypes.FSPEED, 1.06);
-		paramFactory.addParameter(avCar, ParameterTypes.A, new Acceleration(0.8, AccelerationUnit.SI));
+		// speed limit adherence
+		paramFactory.addParameter(avCar, ParameterTypes.FSPEED, 1.05);
+		// headway
+		paramFactory.addParameter(avCar, ParameterTypes.TMAX, Duration.instantiateSI(2.0));
+		paramFactory.addParameter(avCar, ParameterTypes.TMIN, Duration.instantiateSI(0.4));
+		// reaction time
+		paramFactory.addParameter(avCar, ParameterTypes.TR, Duration.instantiateSI(0.5));
+//		// lookahead and lookback
+		paramFactory.addParameter(avCar, ParameterTypes.LOOKAHEAD, Length.instantiateSI(100.0));
+		paramFactory.addParameter(avCar, ParameterTypes.LOOKBACK, Length.instantiateSI(60.0));
+		// affected by other vehicle speed
 		paramFactory.addParameter(avCar, LmrsParameters.SOCIO, 0.8);
-		paramFactory.addParameter(avCar, Tailgating.RHO, 0.4);
+		paramFactory.addParameter(avCar, Tailgating.RHO, 0.0);
 		
 		// return encapsulated vehicle types and parameters
         return new VehicleConfigurationsBundle(hdvCar, avCar, paramFactory);

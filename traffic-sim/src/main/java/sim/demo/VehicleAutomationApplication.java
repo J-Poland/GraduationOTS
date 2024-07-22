@@ -103,8 +103,8 @@ public class VehicleAutomationApplication extends OtsSimulationApplication<Vehic
         List<String> names = new ArrayList<>();
         names.add("FORWARD1");
         names.add("FORWARD2");
-        Length lanePosition = Length.instantiateSI(895.0);	// link DE has a length of 1895 (2105 - 4000)
-        LinkPosition linkPosition = new LinkPosition(getModel().getNetwork().getLink("DE"), lanePosition);
+        Length lanePosition = Length.instantiateSI(0.0);	// link CD has a length of 1895 (1100 - 2000)
+        LinkPosition linkPosition = new LinkPosition(getModel().getNetwork().getLink("CD"), lanePosition);
         GraphCrossSection<LaneDataRoad> crossSection;
         try
         {
@@ -141,7 +141,7 @@ public class VehicleAutomationApplication extends OtsSimulationApplication<Vehic
 			OtsAnimationPanel animationPanel = new OtsAnimationPanel(otsModel.getNetwork().getExtent(),
 					new Dimension(800, 600), simulator, otsModel,
 					new LmrsSwitchableColorer(VehicleConfigurations.GTU_TYPE_COLORS.toMap()), otsModel.getNetwork());
-			VehicleAutomationApplication app = new VehicleAutomationApplication("ShortMerge", animationPanel, otsModel);
+			VehicleAutomationApplication app = new VehicleAutomationApplication("VehicleAutomation", animationPanel, otsModel);
 			app.setExitOnClose(exitOnClose);
 			animationPanel.enableSimulationControlButtons();
 		} catch (SimRuntimeException | NamingException | RemoteException | OtsDrawingException

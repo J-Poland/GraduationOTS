@@ -18,7 +18,7 @@ public class RunVehicleAutomationModel implements Runnable
 	@Option(names = "-seed", description = "Set simulation seed.", defaultValue = "0")
     private long seed;
 	
-    @Option(names = "-simTime", description = "Simulation time.", defaultValue = "600.0")
+    @Option(names = "-simTime", description = "Simulation time.", defaultValue = "360.0")
     private double simTime;
 
     @Option(names = "-avFraction", description = "Fraction of AVs.", defaultValue = "0.15")
@@ -27,10 +27,10 @@ public class RunVehicleAutomationModel implements Runnable
     @Option(names = "-leftFraction", description = "Left traffic fraction.", defaultValue = "0.8")
     private double leftFraction;
     
-    @Option(names = "-mainDemand", description = "Left traffic fraction.", defaultValue = "1000")
+    @Option(names = "-mainDemand", description = "Left traffic fraction.", defaultValue = "2000") // 2000
     private double mainDemand;
     
-    @Option(names = "-rampDemand", description = "Left traffic fraction.", defaultValue = "500")
+    @Option(names = "-rampDemand", description = "Left traffic fraction.", defaultValue = "500") // 500
     private double rampDemand;
     
     @Option(names = "-additionalIncentives", description = "...", negatable=false, defaultValue = "true")

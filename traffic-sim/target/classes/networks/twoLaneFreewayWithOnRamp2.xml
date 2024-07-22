@@ -131,12 +131,11 @@
 
   <ots:Network>
     <ots:Node Id="A" Coordinate="(0, 0)" Direction="0 deg(E)" />
-    <ots:Node Id="B" Coordinate="(1900, 0)" Direction="0 deg(E)" />
-    <ots:Node Id="C" Coordinate="(2100, 0)" Direction="0 deg(E)" />
-    <ots:Node Id="D" Coordinate="(2105, 0)" Direction="0 deg(E)" />
-    <ots:Node Id="E" Coordinate="(4000, 0)" Direction="0 deg(E)" />
-    <ots:Node Id="F" Coordinate="(1480, -40)" Direction="0 deg(E)" />
-    <ots:Node Id="F2" Coordinate="(1500, -40)" Direction="0 deg(E)" />
+    <ots:Node Id="B" Coordinate="(900, 0)" Direction="0 deg(E)" />
+    <ots:Node Id="C" Coordinate="(1100, 0)" Direction="0 deg(E)" />
+    <ots:Node Id="D" Coordinate="(2000, 0)" Direction="0 deg(E)" />
+    <ots:Node Id="E" Coordinate="(480, -40)" Direction="0 deg(E)" />
+    <ots:Node Id="E2" Coordinate="(500, -40)" Direction="0 deg(E)" />
 
     <ots:Link Id="AB" NodeStart="A" NodeEnd="B" Type="HIGHWAY">
       <ots:Straight />
@@ -153,17 +152,12 @@
       <ots:DefinedLayout>2LaneHighway</ots:DefinedLayout>
     </ots:Link>
 
-    <ots:Link Id="DE" NodeStart="D" NodeEnd="E" Type="HIGHWAY">
-      <ots:Straight />
-      <ots:DefinedLayout>2LaneHighway</ots:DefinedLayout>
-    </ots:Link>
-
-    <ots:Link Id="FF2" NodeStart="F" NodeEnd="F2" Type="LOCAL">
+    <ots:Link Id="EE2" NodeStart="E" NodeEnd="E2" Type="LOCAL">
       <ots:Straight />
       <ots:DefinedLayout>1LaneLocal</ots:DefinedLayout>
     </ots:Link>
 
-    <ots:Link Id="F2B" NodeStart="F2" NodeEnd="B" Type="HIGHWAY" OffsetEnd="-3.6m">
+    <ots:Link Id="E2B" NodeStart="E2" NodeEnd="B" Type="HIGHWAY" OffsetEnd="-3.6m">
       <ots:Bezier />
       <ots:DefinedLayout>1LaneHighway</ots:DefinedLayout>
     </ots:Link>
@@ -171,8 +165,8 @@
   </ots:Network>
 
   <ots:Demand>
-    <ots:Sink Type="NL.ROAD_USERS" Link="DE" Lane="FORWARD1" Position="END-50m" />
-    <ots:Sink Type="NL.ROAD_USERS" Link="DE" Lane="FORWARD2" Position="END-50m" />
+    <ots:Sink Type="NL.ROAD_USERS" Link="CD" Lane="FORWARD1" Position="END-50m" />
+    <ots:Sink Type="NL.ROAD_USERS" Link="CD" Lane="FORWARD2" Position="END-50m" />
   </ots:Demand>
 
   <ots:Run>

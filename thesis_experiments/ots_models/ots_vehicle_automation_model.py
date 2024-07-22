@@ -1,16 +1,19 @@
 from ots_models.java_manager import JavaManager
 import pandas as pd
 import os
+import numpy as np
 
 
-# OpenTrafficSim MyShortMerge model class
-class MyShortMergeModel:
+# OpenTrafficSim VehicleAutomationModel class.
+# Class is designed to have a run_model function to work with the EMA Workbench.
+# This allows the OTS Java model to run within the EMA Workbench package for extensive model exploration and analysis.
+class VehicleAutomationModel:
 
     # initialize this object
     def __init__(self, experiment_name, seed=0, user_feedback=True):
         # set Java file path
         self.java_file_path = r'C:\Users\jesse\Documents\Java\TrafficSimulation-workspace' \
-                              r'\traffic-sim\src\main\java\sim\demo\RunMyShortMerge.java'
+                              r'\traffic-sim\src\main\java\sim\demo\RunVehicleAutomationModel.java'
 
         # set Java folder path (for compilation of required Java classes)
         self.java_project_folder = r'C:\Users\jesse\Documents\Java\TrafficSimulation-workspace' \
@@ -35,6 +38,7 @@ class MyShortMergeModel:
         # class variables
         self.java_file = None
         self.replication_count = None
+        self.original_os_dir = None
 
     # function to compile project
     def compile_project(self):
@@ -46,7 +50,10 @@ class MyShortMergeModel:
         # compile project
         self.java_file.compile(self.class_path_file)
 
-    # function to run simulation
+        # get original os directory
+        self.original_os_dir = self.java_file.original_os_dir
+
+    # function to start the simulation's Java model
     def run_simulation(self, sim_time, av_fraction, main_demand, ramp_demand):
         # run simulation headless. With animation is still subject to errors, why?
         run_headless = 'true'
@@ -68,17 +75,17 @@ class MyShortMergeModel:
         self.java_file.java_parameters = input_parameters
         self.java_file.run_java_file()
 
-    # function to automatically save detailed output data
+    # function to automatically save detailed/sequential output data
     def save_detailed_output_data(self, results_folder):
         pass
 
     # function to load simulation output
     def load_simulation_output(self, output_folder_path, output_file_name, detailed_output_file_name=None,
                                experiment_results_folder=None):
-        # load output data
+        # load single (non-sequential) output data
         df_output = pd.read_csv(os.path.join(output_folder_path, output_file_name))
 
-        # only save detailed output when required paths are provided
+        # only save detailed/sequential output when required paths are provided
         if (detailed_output_file_name is not None) and (experiment_results_folder is not None) and \
            (self.replication_count is not None):
             # load detailed output data
@@ -97,13 +104,17 @@ class MyShortMergeModel:
             # convert list to single value when only one value is present
             if len(values) == 1:
                 values = values[0]
+            # check if single value is null, NaN or None
+            invalid_values = [None, "None", "null", "Null", np.nan, "NaN", "nan", "NAN"]
+            if values in invalid_values:
+                values = 0
             # add to dictionary
             output_dict[col] = values
 
         # return output in dictionary format
         return output_dict
 
-    # function to run the simulation model
+    # function to run the simulation model for the EMA Workbench and return model output
     def run_model(self, **kwargs):
 
         # count replications
