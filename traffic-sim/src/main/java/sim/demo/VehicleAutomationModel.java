@@ -1,17 +1,15 @@
 package sim.demo;
 
-import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
-import java.util.Iterator;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
-import java.util.SortedSet;
 
 import org.djunits.unit.DurationUnit;
 import org.djunits.unit.FrequencyUnit;
@@ -26,7 +24,7 @@ import org.djunits.value.vdouble.scalar.Time;
 import org.djutils.event.Event;
 import org.djutils.event.EventListener;
 import org.djutils.immutablecollections.ImmutableCollection;
-import org.djutils.immutablecollections.ImmutableMap;
+import org.djutils.immutablecollections.ImmutableList;
 import org.djutils.io.URLResource;
 import org.opentrafficsim.animation.GraphLaneUtil;
 import org.opentrafficsim.animation.colorer.LmrsSwitchableColorer;
@@ -34,6 +32,7 @@ import org.opentrafficsim.animation.gtu.colorer.GtuColorer;
 import org.opentrafficsim.base.parameters.ParameterException;
 import org.opentrafficsim.base.parameters.ParameterSet;
 import org.opentrafficsim.base.parameters.ParameterTypes;
+import org.opentrafficsim.base.parameters.Parameters;
 import org.opentrafficsim.core.definitions.DefaultsNl;
 import org.opentrafficsim.core.distributions.ConstantGenerator;
 import org.opentrafficsim.core.distributions.Distribution;
@@ -45,9 +44,9 @@ import org.opentrafficsim.core.dsol.OtsSimulatorInterface;
 import org.opentrafficsim.core.gtu.Gtu;
 import org.opentrafficsim.core.gtu.GtuException;
 import org.opentrafficsim.core.gtu.GtuType;
+import org.opentrafficsim.core.gtu.perception.DirectEgoPerception;
 import org.opentrafficsim.core.gtu.plan.operational.OperationalPlanException;
 import org.opentrafficsim.core.idgenerator.IdGenerator;
-import org.opentrafficsim.core.network.LateralDirectionality;
 import org.opentrafficsim.core.network.Link;
 import org.opentrafficsim.core.network.Network;
 import org.opentrafficsim.core.network.NetworkException;
@@ -68,6 +67,7 @@ import org.opentrafficsim.road.gtu.generator.TtcRoomChecker;
 import org.opentrafficsim.road.gtu.generator.characteristics.LaneBasedGtuTemplate;
 import org.opentrafficsim.road.gtu.generator.characteristics.LaneBasedGtuTemplateDistribution;
 import org.opentrafficsim.road.gtu.lane.LaneBasedGtu;
+import org.opentrafficsim.road.gtu.lane.perception.mental.TaskManager;
 import org.opentrafficsim.road.gtu.lane.tactical.LaneBasedTacticalPlannerFactory;
 import org.opentrafficsim.road.gtu.lane.tactical.following.AbstractIdm;
 import org.opentrafficsim.road.gtu.lane.tactical.following.CarFollowingModelFactory;
@@ -77,7 +77,6 @@ import org.opentrafficsim.road.gtu.lane.tactical.lmrs.AccelerationConflicts;
 import org.opentrafficsim.road.gtu.lane.tactical.lmrs.AccelerationIncentive;
 import org.opentrafficsim.road.gtu.lane.tactical.lmrs.AccelerationSpeedLimitTransition;
 import org.opentrafficsim.road.gtu.lane.tactical.lmrs.AccelerationTrafficLights;
-import org.opentrafficsim.road.gtu.lane.tactical.lmrs.DefaultLmrsPerceptionFactory;
 import org.opentrafficsim.road.gtu.lane.tactical.lmrs.IncentiveCourtesy;
 import org.opentrafficsim.road.gtu.lane.tactical.lmrs.IncentiveKeep;
 import org.opentrafficsim.road.gtu.lane.tactical.lmrs.IncentiveRoute;
@@ -106,20 +105,35 @@ import nl.tudelft.simulation.dsol.simulators.SimulatorInterface;
 import nl.tudelft.simulation.jstats.distributions.DistUniform;
 import nl.tudelft.simulation.jstats.streams.MersenneTwister;
 import nl.tudelft.simulation.jstats.streams.StreamInterface;
+import sim.demo.behavior.TrafficInteractionAdaptations.CarFollowingBehavior;
+import sim.demo.lmrs.CustomCooperation;
+import sim.demo.mental.CarFollowingTask;
+import sim.demo.mental.CustomAdaptationHeadway;
+import sim.demo.mental.CustomAdaptationSituationalAwareness;
+import sim.demo.mental.LaneChangeTask;
+import sim.demo.mental.TaskManagerAr;
 
 import org.opentrafficsim.road.gtu.lane.perception.AbstractLanePerception;
 import org.opentrafficsim.road.gtu.lane.perception.CategoricalLanePerception;
+import org.opentrafficsim.road.gtu.lane.perception.LanePerception;
 import org.opentrafficsim.road.gtu.lane.perception.PerceptionCollectable;
+import org.opentrafficsim.road.gtu.lane.perception.PerceptionFactory;
 import org.opentrafficsim.road.gtu.lane.perception.RelativeLane;
 import org.opentrafficsim.road.gtu.lane.perception.categories.AnticipationTrafficPerception;
-import org.opentrafficsim.road.gtu.lane.perception.categories.DefaultSimplePerception;
-import org.opentrafficsim.road.gtu.lane.perception.categories.DirectDefaultSimplePerception;
 import org.opentrafficsim.road.gtu.lane.perception.categories.DirectInfrastructurePerception;
-import org.opentrafficsim.road.gtu.lane.perception.categories.LaneBasedAbstractPerceptionCategory;
+import org.opentrafficsim.road.gtu.lane.perception.categories.DirectIntersectionPerception;
+import org.opentrafficsim.road.gtu.lane.perception.categories.neighbors.Anticipation;
 import org.opentrafficsim.road.gtu.lane.perception.categories.neighbors.DirectNeighborsPerception;
-import org.opentrafficsim.road.gtu.lane.perception.categories.neighbors.NeighborsPerception;
-import org.opentrafficsim.road.gtu.lane.perception.headway.Headway;
+import org.opentrafficsim.road.gtu.lane.perception.categories.neighbors.Estimation;
+import org.opentrafficsim.road.gtu.lane.perception.categories.neighbors.HeadwayGtuType;
+import org.opentrafficsim.road.gtu.lane.perception.categories.neighbors.HeadwayGtuType.PerceivedHeadwayGtuType;
 import org.opentrafficsim.road.gtu.lane.perception.headway.HeadwayGtu;
+import org.opentrafficsim.road.gtu.lane.perception.mental.AdaptationHeadway;
+import org.opentrafficsim.road.gtu.lane.perception.mental.AdaptationSituationalAwareness;
+import org.opentrafficsim.road.gtu.lane.perception.mental.AdaptationSpeed;
+import org.opentrafficsim.road.gtu.lane.perception.mental.Fuller;
+import org.opentrafficsim.road.gtu.lane.perception.mental.Fuller.BehavioralAdaptation;
+import org.opentrafficsim.road.gtu.lane.perception.mental.Task;
 
 
 /**
@@ -151,6 +165,8 @@ public class VehicleAutomationModel extends AbstractOtsModel implements EventLis
 	private RoadNetwork network;
 
 	/** Network. */
+	// Rijkswaterstaat ROA Chapter 6 contains standards on turbulence regions
+	// also the merge lane lengths are defined
 	static final String networkString = "twoLaneFreewayWithOnRamp2";
 	
 	/** Speed limit and speed variation. */
@@ -188,6 +204,9 @@ public class VehicleAutomationModel extends AbstractOtsModel implements EventLis
     
     /** Map for GTU remove times */
     private LinkedHashMap<String, Double> gtuRemoveTimesMap;
+    
+    /** Last recording of output trajectory data*/
+    private double trajectoryLastTime;
 	
 	
 	// input parameters
@@ -204,8 +223,8 @@ public class VehicleAutomationModel extends AbstractOtsModel implements EventLis
 	/** Total run time of simulation. */
 	static Time simTime;
 	
-	/** AV fraction in traffic. */
-	static double avFraction;
+	/** Gtu type fractions in traffic. */
+	static ArrayList<Double> gtuFractions;
 
 	/** Left traffic fraction. */
 	static double leftFraction;
@@ -217,7 +236,7 @@ public class VehicleAutomationModel extends AbstractOtsModel implements EventLis
 	static Frequency rampDemand;
 	
 	/** Use additional incentives. */
-	static boolean additionalIncentives = true;
+	static boolean additionalIncentives;
 
 	/** Left traffic fraction. */
 	static Duration tMin;
@@ -227,7 +246,9 @@ public class VehicleAutomationModel extends AbstractOtsModel implements EventLis
 	
 	/** File path for output data. */
 	static String singleOutputFilePath;
+	static String intermediateMeanValuesFilePath;
 	static String sequenceOutputFilePath;
+	static String trajectoryOutputFilePath;
 	
 
 	/**
@@ -252,11 +273,16 @@ public class VehicleAutomationModel extends AbstractOtsModel implements EventLis
 		// initialise class variables
 		gtuAddTimesMap = new LinkedHashMap<String, Double>();
 		gtuRemoveTimesMap = new LinkedHashMap<String, Double>();
+		gtuFractions = new ArrayList<Double>();
+		trajectoryLastTime = -100.0;
 		
 		// initialise input variables
 		simTime = new Time(simConfig.getSimTime(), TimeUnit.BASE_SECOND);
 		seedGenerator = new Random(simConfig.getSeed());
-		avFraction = simConfig.getAvFraction();
+		gtuFractions.add(simConfig.getLevel0Fraction());
+		gtuFractions.add(simConfig.getLevel1Fraction());
+		gtuFractions.add(simConfig.getLevel2Fraction());
+		gtuFractions.add(simConfig.getLevel3Fraction());
 		leftFraction = simConfig.getLeftFraction();
 		mainDemand = new Frequency(simConfig.getMainDemand(), FrequencyUnit.PER_HOUR);
 		rampDemand = new Frequency(simConfig.getRampDemand(), FrequencyUnit.PER_HOUR);
@@ -264,7 +290,9 @@ public class VehicleAutomationModel extends AbstractOtsModel implements EventLis
 		tMin = Duration.instantiateSI(simConfig.getTMin());
 		tMax = Duration.instantiateSI(simConfig.getTMax());
 		singleOutputFilePath = simConfig.getSingleOutputFilePath();
+		intermediateMeanValuesFilePath = simConfig.getIntermediateMeanValuesFilePath();
 		sequenceOutputFilePath = simConfig.getSequenceOutputFilePath();
+		trajectoryOutputFilePath = simConfig.getTrajectoryOutputFilePath();
 	}
 
 	/**
@@ -294,7 +322,7 @@ public class VehicleAutomationModel extends AbstractOtsModel implements EventLis
 			createSampler();
 			
 			// setup FD data
-			Duration updateInterval = Duration.instantiateSI(60.0);
+			Duration updateInterval = Duration.instantiateSI(2.0);
 			createNetworkFdValues(updateInterval);
 	        
 	        // recalculate FD data at a fixed interval
@@ -315,7 +343,7 @@ public class VehicleAutomationModel extends AbstractOtsModel implements EventLis
 		// simulator events
 		this.simulator.addListener(this, SimulatorInterface.START_EVENT);
 		this.simulator.addListener(this, SimulatorInterface.STOP_EVENT);
-//		this.simulator.addListener(this, SimulatorInterface.TIME_CHANGED_EVENT);
+		this.simulator.addListener(this, SimulatorInterface.TIME_CHANGED_EVENT);
 		
 		// traffic events
 		this.network.addListener(this, Network.GTU_ADD_EVENT);
@@ -346,22 +374,22 @@ public class VehicleAutomationModel extends AbstractOtsModel implements EventLis
 			
 			saveFdValues();
 			
-			outputDataManager.exportToCsv(singleOutputFilePath, sequenceOutputFilePath);
+			outputDataManager.exportToCsv(singleOutputFilePath, sequenceOutputFilePath, trajectoryOutputFilePath);
 		}
 		
 		// handle simulation time changed event
-//		if (event.getType().equals(SimulatorInterface.TIME_CHANGED_EVENT)) {
-//			
-//		}
+		if (event.getType().equals(SimulatorInterface.TIME_CHANGED_EVENT)) {
+			// track trajectory data
+	        TrackTrajectories(2.0);
+		}
 		
 		// subscribe to GTU lane events when GTUs are added to the simulation
 		if (event.getType().equals(Network.GTU_ADD_EVENT)) {
 			String gtuId = (String) event.getContent();
 			LaneBasedGtu gtu = (LaneBasedGtu) this.network.getGTU(gtuId);
-
+			
 			// add GTU listeners
 			gtu.addListener(this, Gtu.MOVE_EVENT);
-//			gtu.addListener(this, LaneBasedGtu.LANEBASED_MOVE_EVENT);
 			gtu.addListener(this, LaneBasedGtu.LANE_CHANGE_EVENT);
 			
 			// add GTU to gtuAddTimesMap to track GTU travel time
@@ -375,7 +403,6 @@ public class VehicleAutomationModel extends AbstractOtsModel implements EventLis
 			
 			// remove GTU listeners
 			gtu.removeListener(this, Gtu.MOVE_EVENT);
-//			gtu.removeListener(this, LaneBasedGtu.LANEBASED_MOVE_EVENT);
 			gtu.removeListener(this, LaneBasedGtu.LANE_CHANGE_EVENT);
 			
 			// add GTU to gtuRemoveTimesMap and calculate travelled time
@@ -387,31 +414,36 @@ public class VehicleAutomationModel extends AbstractOtsModel implements EventLis
 		if (event.getType().equals(Gtu.MOVE_EVENT)) {
 			String gtuId = (String) ((Object[]) event.getContent())[0];
 	        LaneBasedGtu gtu = (LaneBasedGtu) this.network.getGTU(gtuId);
-	        TrackHeadway(gtu);
+	        
+	        // track GTU data
+	        TrackGtuData(gtu);
+	        
+	        // change driving behaviour because of surrounding traffic
+//	        try {
+	        	// CF
+//	        	CarFollowingBehavior carFollowingBehavior = new CarFollowingBehavior(gtu);
+//	        	carFollowingBehavior.adaptToVehicleInFront();
+	        	// LC
+	        	// lane changing behaviour is changed when lmrs cooperation decision is made
+	        	// CustomCooperation contains this logic
+//			} catch (OperationalPlanException e) {
+//				e.printStackTrace();
+//			} catch (ParameterException e) {
+//				e.printStackTrace();
+//			}
 		}
-		
-		// process move event
-//		if (event.getType().equals(LaneBasedGtu.LANEBASED_MOVE_EVENT)) {
-//
-//			String gtuId = (String) ((Object[]) event.getContent())[0];
-//			LaneBasedGtu gtu = (LaneBasedGtu) this.network.getGTU(gtuId);
-//			Speed gtuSpeed = (Speed) ((Object[]) event.getContent())[3];
-//			this.network.getLink(((String[]) event.getContent())[7]).getGTUs();
-//			
-//		}
 		
 		// process change event
 		if (event.getType().equals(LaneBasedGtu.LANE_CHANGE_EVENT)) {
 
 			String gtuId = (String) ((Object[]) event.getContent())[0];
-			LaneBasedGtu gtu = (LaneBasedGtu) this.network.getGTU(gtuId);
+			// LaneBasedGtu gtu = (LaneBasedGtu) this.network.getGTU(gtuId);
 			String gtuDirection = (String) ((Object[]) event.getContent())[1];
 			String gtuLink = (String) ((Object[]) event.getContent())[2];
 			String gtuLane = (String) ((Object[]) event.getContent())[3];
 			
 			TrackLaneChanges(gtuId, gtuDirection, gtuLink, gtuLane);
 		}
-
 	}
 	
 	/**
@@ -422,10 +454,6 @@ public class VehicleAutomationModel extends AbstractOtsModel implements EventLis
 	 */
 	private LaneDataRoad convertToLaneDataRoad(Lane lane) {
 	    return new LaneDataRoad(lane);
-	}
-	
-	private void printAtFrequency() {
-		this.simulator.scheduleEventRel(Duration.instantiateSI(10.0), this::printAtFrequency);
 	}
 
 	/** {@inheritDoc} */
@@ -447,20 +475,62 @@ public class VehicleAutomationModel extends AbstractOtsModel implements EventLis
 	private void addGenerator() throws ParameterException, GtuException, NetworkException, ProbabilityException,
 			SimRuntimeException, RemoteException {
 		
+		// source settings
 		Map<String, StreamInterface> streams = new LinkedHashMap<>();
 		StreamInterface stream = new MersenneTwister(Math.abs(seedGenerator.nextLong()) + 1);
 		streams.put("headwayGeneration", stream);
 		streams.put("gtuClass", new MersenneTwister(Math.abs(seedGenerator.nextLong()) + 1));
 		getStreamInformation().addStream("headwayGeneration", stream);
 		getStreamInformation().addStream("gtuClass", streams.get("gtuClass"));
-
 		TtcRoomChecker roomChecker = new TtcRoomChecker(new Duration(10.0, DurationUnit.SI));
 		IdGenerator idGenerator = new IdGenerator("");
-
+		
+		// car following model
 		CarFollowingModelFactory<IdmPlus> idmPlusFactory = new IdmPlusFactory(streams.get("gtuClass"));
 		ParameterSet params = new ParameterSet();
 		params.setDefaultParameter(AbstractIdm.DELTA);
-
+		
+		// driver perception
+		PerceptionFactory perceptionFactory = new PerceptionFactory()
+		{
+			public Parameters getParameters() throws ParameterException
+		    {
+		        return new ParameterSet().setDefaultParameter(ParameterTypes.LOOKAHEAD).setDefaultParameter(ParameterTypes.LOOKBACKOLD)
+		                .setDefaultParameter(ParameterTypes.PERCEPTION).setDefaultParameter(ParameterTypes.LOOKBACK);
+		    }
+			
+			@Override
+			public LanePerception generatePerception(final LaneBasedGtu gtu)
+			{
+				Set<Task> tasks = new LinkedHashSet<>();
+                tasks.add(new CarFollowingTask());
+                tasks.add(new LaneChangeTask());
+                
+                Set<BehavioralAdaptation> behavioralAdapatations = new LinkedHashSet<>();
+                // these adaptations must be present! next to adjusting parameters based on task load,
+                // they are responsible to set the parameters required for Fuller perception
+                behavioralAdapatations.add(new CustomAdaptationSituationalAwareness());
+                behavioralAdapatations.add(new CustomAdaptationHeadway());
+                behavioralAdapatations.add(new AdaptationSpeed());
+                
+                TaskManager taskManager = new TaskManagerAr("car-following");
+                CategoricalLanePerception perception =
+                        new CategoricalLanePerception(gtu, new Fuller(tasks, behavioralAdapatations, taskManager));
+                
+                Estimation estimation = Estimation.NONE;
+                Anticipation anticipation = Anticipation.CONSTANT_ACCELERATION;
+                
+                HeadwayGtuType headwayGtuType = new PerceivedHeadwayGtuType(estimation, anticipation);
+                perception.addPerceptionCategory(new DirectEgoPerception<>(perception));
+                perception.addPerceptionCategory(new DirectInfrastructurePerception(perception));
+                perception.addPerceptionCategory(new DirectNeighborsPerception(perception, headwayGtuType));
+                perception.addPerceptionCategory(new AnticipationTrafficPerception(perception));
+                perception.addPerceptionCategory(new DirectIntersectionPerception(perception, HeadwayGtuType.WRAP));
+                return perception;
+			}
+		};
+		
+		// drive incentives
 		Set<MandatoryIncentive> mandatoryIncentives = new LinkedHashSet<>();
 		Set<VoluntaryIncentive> voluntaryIncentives = new LinkedHashSet<>();
 		Set<AccelerationIncentive> accelerationIncentives = new LinkedHashSet<>();
@@ -481,18 +551,18 @@ public class VehicleAutomationModel extends AbstractOtsModel implements EventLis
 //				new DefaultLmrsPerceptionFactory(), synchronizationMethod, cooperationMethod, GapAcceptance.INFORMED,
 //				Tailgating.NONE, mandatoryIncentives, voluntaryIncentives, accelerationIncentives);
 		LaneBasedTacticalPlannerFactory<Lmrs> tacticalFactory = new LmrsFactory(idmPlusFactory,
-				new DefaultLmrsPerceptionFactory(), synchronizationMethod, cooperationMethod, GapAcceptance.INFORMED,
+				perceptionFactory, synchronizationMethod, cooperationMethod, GapAcceptance.INFORMED,
 				Tailgating.NONE, mandatoryIncentives, voluntaryIncentives, accelerationIncentives);
 		
 		// retrieve automation vehicle types and parameters
-		vehicleVars = VehicleConfigurations.setVehicleTypes(stream);
-		GtuType hdvCar = vehicleVars.getHdvCar();
-		GtuType avCar = vehicleVars.getAvCar();
+		VehicleConfigurations vehicleConfig = new VehicleConfigurations();
+		vehicleVars = vehicleConfig.setVehicleTypes(stream);
+		ArrayList<GtuType> availableGtuTypes = vehicleVars.getAutomationGtuTypes();
 		ParameterFactoryByType paramFactory = vehicleVars.getParameterFactory();
 		
-		// create routes on RoadNetwork
-		Route routeAD = this.network.getShortestRouteBetween(hdvCar, this.network.getNode("A"), this.network.getNode("D"));
-		Route routeED = this.network.getShortestRouteBetween(hdvCar, this.network.getNode("E"), this.network.getNode("D"));
+		// create routes on RoadNetwork (routes are the same for all gtu types)
+		Route routeAD = this.network.getShortestRouteBetween(availableGtuTypes.get(0), this.network.getNode("A"), this.network.getNode("D"));
+		Route routeED = this.network.getShortestRouteBetween(availableGtuTypes.get(0), this.network.getNode("E"), this.network.getNode("D"));
 		
 		// create route generators
 		List<FrequencyAndObject<Route>> routesA = new ArrayList<>();
@@ -505,7 +575,7 @@ public class VehicleAutomationModel extends AbstractOtsModel implements EventLis
 		Generator<Route> routeGeneratorE = new ProbabilisticRouteGenerator(routesE, stream);
 
 		// set initial speed for generators
-		double rampSpeed = 55.0;	// Highway Capacity Manual 2000: Ramps and Ramp Juntions p.268
+		double rampSpeed = 50.0;	// Rijkswaterstaat ROA 6.1.1 (table 6.1)
 		Speed speedA = new Speed(speedLimit, SpeedUnit.KM_PER_HOUR);
 		Speed speedE = new Speed(rampSpeed, SpeedUnit.KM_PER_HOUR);
 		
@@ -518,51 +588,50 @@ public class VehicleAutomationModel extends AbstractOtsModel implements EventLis
 		Generator<Duration> headwaysA2 = new HeadwayGenerator(getSimulator(), mainDemand);
 		Generator<Duration> headwaysE = new HeadwayGenerator(getSimulator(), rampDemand);
 
-		// speed generators
-		ContinuousDistDoubleScalar.Rel<Speed, SpeedUnit> speedHDV = new ContinuousDistDoubleScalar.Rel<>(
-				new DistUniform(stream, speedMin, speedMax), SpeedUnit.KM_PER_HOUR);
-		ContinuousDistDoubleScalar.Rel<Speed, SpeedUnit> speedAV = new ContinuousDistDoubleScalar.Rel<>(
+		// speed generators (the same for all gtu types)
+		ContinuousDistDoubleScalar.Rel<Speed, SpeedUnit> gtuSpeed = new ContinuousDistDoubleScalar.Rel<>(
 				new DistUniform(stream, speedMin, speedMax), SpeedUnit.KM_PER_HOUR);
 		
 		// strategical planner factory
 		LaneBasedStrategicalRoutePlannerFactory strategicalFactory = new LaneBasedStrategicalRoutePlannerFactory(
 				tacticalFactory, paramFactory);
 		
-		// vehicle templates, with routes from main road and ramp
-		LaneBasedGtuTemplate hdvA = 
-				new LaneBasedGtuTemplate(hdvCar, 
-				new ConstantGenerator<>(Length.instantiateSI(hdvLength)),
-				new ConstantGenerator<>(Length.instantiateSI(hdvWidth)), 
-				speedHDV, strategicalFactory, routeGeneratorA);
-		LaneBasedGtuTemplate hdvE = 
-				new LaneBasedGtuTemplate(hdvCar, 
-				new ConstantGenerator<>(Length.instantiateSI(hdvLength)),
-				new ConstantGenerator<>(Length.instantiateSI(hdvWidth)), 
-				speedHDV, strategicalFactory, routeGeneratorE);
-		LaneBasedGtuTemplate avA = 
-				new LaneBasedGtuTemplate(avCar,
-				new ConstantGenerator<>(Length.instantiateSI(avLength)), 
-				new ConstantGenerator<>(Length.instantiateSI(avWidth)),
-				speedAV, strategicalFactory, routeGeneratorA);
-		LaneBasedGtuTemplate avE = 
-				new LaneBasedGtuTemplate(avCar,
-				new ConstantGenerator<>(Length.instantiateSI(avLength)), 
-				new ConstantGenerator<>(Length.instantiateSI(avWidth)),
-				speedAV, strategicalFactory, routeGeneratorE);
+		// create vehicle templates, with routes from main road and ramp
+		ArrayList<LaneBasedGtuTemplate> gtuMainTemplates = new ArrayList<LaneBasedGtuTemplate>();
+		ArrayList<LaneBasedGtuTemplate> gtuRampTemplates = new ArrayList<LaneBasedGtuTemplate>();
+		for (GtuType gtuType : availableGtuTypes) {
+			// main road
+			LaneBasedGtuTemplate templateA = 
+					new LaneBasedGtuTemplate(gtuType, 
+					new ConstantGenerator<>(Length.instantiateSI(hdvLength)),
+					new ConstantGenerator<>(Length.instantiateSI(hdvWidth)), 
+					gtuSpeed, strategicalFactory, routeGeneratorA);
+			gtuMainTemplates.add(templateA);
+			// ramp
+			LaneBasedGtuTemplate templateE = 
+					new LaneBasedGtuTemplate(gtuType, 
+					new ConstantGenerator<>(Length.instantiateSI(hdvLength)),
+					new ConstantGenerator<>(Length.instantiateSI(hdvWidth)), 
+					gtuSpeed, strategicalFactory, routeGeneratorE);
+			gtuRampTemplates.add(templateE);
+		}
 		
 		// set vehicle distributions for
 		// left lane
-		Distribution<LaneBasedGtuTemplate> gtuType1stLaneA = new Distribution<>(streams.get("gtuClass"));
-		gtuType1stLaneA.add(new FrequencyAndObject<>(1.0 - avFraction, hdvA));
-		gtuType1stLaneA.add(new FrequencyAndObject<>(avFraction, avA));
+		Distribution<LaneBasedGtuTemplate> gtuTypeLaneA1 = new Distribution<>(streams.get("gtuClass"));
+		for (int i = 0; i < gtuMainTemplates.size(); i++) {
+			gtuTypeLaneA1.add(new FrequencyAndObject<>(gtuFractions.get(i), gtuMainTemplates.get(i)));
+		}
 		// right lane
-		Distribution<LaneBasedGtuTemplate> gtuType2ndLaneA = new Distribution<>(streams.get("gtuClass"));
-		gtuType2ndLaneA.add(new FrequencyAndObject<>(1.0 - avFraction, hdvA));
-		gtuType2ndLaneA.add(new FrequencyAndObject<>(avFraction, avA));
+		Distribution<LaneBasedGtuTemplate> gtuTypeLaneA2 = new Distribution<>(streams.get("gtuClass"));
+		for (int i = 0; i < gtuMainTemplates.size(); i++) {
+			gtuTypeLaneA2.add(new FrequencyAndObject<>(gtuFractions.get(i), gtuMainTemplates.get(i)));
+		}
 		// ramp lane
 		Distribution<LaneBasedGtuTemplate> gtuTypeLaneE = new Distribution<>(streams.get("gtuClass"));
-		gtuTypeLaneE.add(new FrequencyAndObject<>(1.0 - avFraction, hdvE));
-		gtuTypeLaneE.add(new FrequencyAndObject<>(avFraction, avE));
+		for (int i = 0; i < gtuMainTemplates.size(); i++) {
+			gtuTypeLaneE.add(new FrequencyAndObject<>(gtuFractions.get(i), gtuRampTemplates.get(i)));
+		}
 
 		// set vehicle colours
 		GtuColorer colorer = new LmrsSwitchableColorer(DefaultsNl.GTU_TYPE_COLORS.toMap());
@@ -570,10 +639,10 @@ public class VehicleAutomationModel extends AbstractOtsModel implements EventLis
 		// create generators for all lanes with corresponding objects
 		Time simTime = Time.instantiateSI(simConfig.getSimTime());
 		// left lane
-		makeGenerator(getLane(linkA, "FORWARD1"), speedA, "gen1", idGenerator, gtuType1stLaneA, headwaysA1, colorer,
+		makeGenerator(getLane(linkA, "FORWARD1"), speedA, "gen1", idGenerator, gtuTypeLaneA1, headwaysA1, colorer,
 				roomChecker, paramFactory, tacticalFactory, simTime, streams.get("gtuClass"));
 		// right lane
-		makeGenerator(getLane(linkA, "FORWARD2"), speedA, "gen2", idGenerator, gtuType2ndLaneA, headwaysA2, colorer,
+		makeGenerator(getLane(linkA, "FORWARD2"), speedA, "gen2", idGenerator, gtuTypeLaneA2, headwaysA2, colorer,
 				roomChecker, paramFactory, tacticalFactory, simTime, streams.get("gtuClass"));
 		// ramp lane
 		makeGenerator(getLane(linkF, "FORWARD1"), speedE, "gen3", idGenerator, gtuTypeLaneE, headwaysE, colorer,
@@ -676,11 +745,60 @@ public class VehicleAutomationModel extends AbstractOtsModel implements EventLis
 	}
 	
 	/**
-	 * Function to track headway info within the simulation.
+	 * Function to track GTU trajectories.
 	 * @param gtu
 	 */
-	public void TrackHeadway(LaneBasedGtu gtu)
+	public void TrackTrajectories(double frequency)
 	{
+		// check whether a recording was already performed for this time interval
+		// skip this for first time, initially trajectoryLastTime will be < 0
+		double now = this.simulator.getSimulatorTime().si;
+		if (trajectoryLastTime > 0) {
+			// it is not the next time interval?
+			if (now < trajectoryLastTime + frequency) {
+				// do not record trajectories
+				return;
+			}
+		}
+		
+		// record trajectories
+		// go through links to track
+		String[] linksToTrack = {"AB", "BC", "CD"};
+		for (String link : linksToTrack) {
+			// go through lanes of this link
+			List<Lane> lanesInLink = ((CrossSectionLink) this.network.getLink(link)).getLanes();
+			int numOfLanes = lanesInLink.size();
+			for (int i = 0; i < numOfLanes; i++) {
+				Lane lane = lanesInLink.get(i);
+				ImmutableList<LaneBasedGtu> gtus = lane.getGtuList();
+				// track trajectory of GTUs in this lane
+				for (Gtu gtu : gtus) {
+					String gtuId = gtu.getId();
+					double time = gtu.getSimulator().getSimulatorTime().si;
+					double distance = gtu.getLocation().getX();
+					double speed = gtu.getSpeed().si;
+					
+					// store values
+					outputDataManager.saveTrajectory(gtuId, link, lane.getId(), time, distance, speed);
+				}
+			}
+			
+			// set last recording time
+			trajectoryLastTime = now;
+		}
+	}
+	
+	/**
+	 * Function to track GTU info within the simulation.
+	 * @param gtu
+	 */
+	public void TrackGtuData(LaneBasedGtu gtu)
+	{
+		// main info
+		String gtuId = gtu.getId();
+    	double simTime = this.simulator.getSimulatorTime().si;
+    	
+		// get headway info
 		HeadwayInfo headwayInfo = null;
 		try {
 			headwayInfo = calculateHeadwayInfo(gtu);
@@ -689,6 +807,7 @@ public class VehicleAutomationModel extends AbstractOtsModel implements EventLis
 		}
         
         if (headwayInfo != null) {
+        	// store single headway info for mean calculations
         	double headwayTime = headwayInfo.getTtc();
         	double headwayDistance = headwayInfo.getHeadwayDistance();
         	boolean headwayCriticalTtc = headwayInfo.isCriticalTtc();
@@ -701,7 +820,20 @@ public class VehicleAutomationModel extends AbstractOtsModel implements EventLis
         	if (headwayCriticalTtc) {
         		outputDataManager.increaseSingleCount("criticalTtc");
         	}
+        	
+        	// store sequence headway info for detailed data
+        	outputDataManager.addSequenceData(gtuId, simTime, "headwayTime", headwayTime);
+        	outputDataManager.addSequenceData(gtuId, simTime, "headwayDistance", headwayDistance);
+        	outputDataManager.addSequenceData(gtuId, simTime, "criticalTtc", headwayCriticalTtc);
+        	double desiredHeadwayTime = gtu.getParameters().getParameterOrNull(ParameterTypes.T).si;
+        	outputDataManager.addSequenceData(gtuId, simTime, "desiredHeadwayTimeError", (headwayTime - desiredHeadwayTime));
         }
+        
+        // store other detailed data
+        outputDataManager.addSequenceData(gtuId, simTime, "type", gtu.getType().toString());
+        outputDataManager.addSequenceData(gtuId, simTime, "acceleration", gtu.getAcceleration().toString());
+        outputDataManager.addSequenceData(gtuId, simTime, "speed", gtu.getSpeed().toString());
+        outputDataManager.addSequenceData(gtuId, simTime, "taskSaturation", gtu.getParameters().getParameterOrNull(Fuller.TS).toString());
 	}
 	
 	/**
@@ -883,7 +1015,6 @@ public class VehicleAutomationModel extends AbstractOtsModel implements EventLis
 
         // create an FD source for the entire network
         this.source = FundamentalDiagram.sourceFromSampler(sampler, networkPath, true, updateInterval);
-        
     }
     
     /*
@@ -915,7 +1046,7 @@ public class VehicleAutomationModel extends AbstractOtsModel implements EventLis
     private void stopLaneRecording() {
     	// stop recording on the sampler for the entire network, only if lanes are specified
     	if (!this.allLanes.isEmpty()) {
-        	System.out.println("Stopped recording");
+        	System.out.println("Stopped sampler lane recording");
     		for (LaneDataRoad laneData : this.allLanes) {
             	this.sampler.stopRecording(laneData);
             }
@@ -925,8 +1056,8 @@ public class VehicleAutomationModel extends AbstractOtsModel implements EventLis
     /*
      * Method to save calculated FD values.
      */
-    private void saveFdValues() {
-        
+    private void saveFdValues()
+    {
         // get last calculated index
         int latestIndex = this.source.getItemCount(0);
         if (latestIndex > 0) {
@@ -939,17 +1070,16 @@ public class VehicleAutomationModel extends AbstractOtsModel implements EventLis
         	outputDataManager.addToMeanList("meanDensity", this.source.getDensity(0, i));
         	outputDataManager.addToMeanList("meanFlow", this.source.getFlow(0, i));
         }
-        
     }
     
 	
 	/**
      * Class for output data.
      */
-    private class OutputDataManager
+    public class OutputDataManager
     {
     	/** Map of values for each sequence output parameter. */
-        private Map<String, ArrayList<Object>> sequenceOutputMap = new LinkedHashMap<>();
+    	private Map<String, GtuSequenceData> sequenceOutputMap = new LinkedHashMap<>();
         
         /** Map of values for each constant output parameter. */
         private Map<String, Object> singleOutputMap = new LinkedHashMap<>();
@@ -959,7 +1089,7 @@ public class VehicleAutomationModel extends AbstractOtsModel implements EventLis
         
         
         /** Function to retrieve Map of sequence output data. */
-        public Map<String, ArrayList<Object>> getSequenceOutputData() {
+        public Map<String, GtuSequenceData> getSequenceOutputData() {
         	return sequenceOutputMap;
         }
         
@@ -973,37 +1103,31 @@ public class VehicleAutomationModel extends AbstractOtsModel implements EventLis
         	return meanMap;
         }
         
+        /** Lists to store trajectory data. */
+        public ArrayList<String> trajectoryIds = new ArrayList<String>();
+        public ArrayList<String> trajectoryLink = new ArrayList<String>();
+        public ArrayList<String> trajectoryLane = new ArrayList<String>();
+        public ArrayList<String> trajectoryTime = new ArrayList<String>();
+        public ArrayList<String> trajectoryDistance = new ArrayList<String>();
+        public ArrayList<String> trajectorySpeed = new ArrayList<String>();
+        
         /** Export output data. */
-        public void exportToCsv(String singleFilePath, String sequenceFilePath) {
+        public void exportToCsv(String singleFilePath, String sequenceFilePath, String trajectoryFilePath) {
         	
         	// calculate mean values for the variables stored in the meanMap and save them as single output (not sequence)
         	calculateAndSaveMeans();
         	
         	// create export object and perform export functions
-        	ExportSimulationOutput exporter = new ExportSimulationOutput(sequenceOutputMap, singleOutputMap);
-        	exporter.exportSingleToCsv(singleFilePath);
-        	exporter.exportSequenceToCsv(sequenceFilePath);
+        	ExportSimulationOutput exporter = new ExportSimulationOutput();
+        	exporter.exportSingleToCsv(singleOutputMap, singleFilePath);
+        	exporter.exportIntermediateMeanValuesToCsv(meanMap , intermediateMeanValuesFilePath);
+        	exporter.exportSequenceToCsv(sequenceOutputMap, sequenceFilePath);
+        	exporter.exportTrajectoriesToCsv(trajectoryIds, trajectoryLink, trajectoryLane, trajectoryTime,
+        									 trajectoryDistance, trajectorySpeed, trajectoryFilePath);
         	
         	// temp printing values
         	for (String key : singleOutputMap.keySet()) {
         		System.out.println(key + ": " + singleOutputMap.get(key));
-        	}
-        }
-        
-        /** Function to add a value to sequence output data in the linked map. */
-        public void addToSequenceList(String paramString, Object paramValue) {
-        	
-        	// check whether this parameter string already exists
-        	boolean exists = sequenceOutputMap.containsKey(paramString);
-        	// exists? then, add value to the existing list
-        	if (exists) {
-        		this.sequenceOutputMap.get(paramString).add(paramValue);
-        	}
-        	// does not exist yet? then, create new list for this first value and add it to the map
-        	else {
-        		ArrayList<Object> firstValueList = new ArrayList<Object>();
-        		firstValueList.add(paramValue);
-        		this.sequenceOutputMap.put(paramString, firstValueList);
         	}
         }
         
@@ -1022,6 +1146,13 @@ public class VehicleAutomationModel extends AbstractOtsModel implements EventLis
         		firstValueList.add(paramValue);
         		this.meanMap.put(paramString, firstValueList);
         	}
+        }
+        
+        /** Function to add data to sequence map. Meant to store detailed data at simTime with gtuID*/
+        public void addSequenceData(String gtuId, double simTime, String variable, Object value) {
+            GtuSequenceData gtuData = sequenceOutputMap.getOrDefault(gtuId, new GtuSequenceData());
+            gtuData.addDataPoint(simTime, variable, value);
+            sequenceOutputMap.put(gtuId, gtuData);
         }
         
         /** Function to set a constant output value. */
@@ -1102,6 +1233,59 @@ public class VehicleAutomationModel extends AbstractOtsModel implements EventLis
         	
         	// return mean value
         	return mean;
+        }
+        
+        /** Function to add trajectory data to the corresponding lists. */
+        public void saveTrajectory(String gtuId, String link, String lane, double time, double distance, double speed)
+        {
+        	trajectoryIds.add(gtuId);
+        	trajectoryLink.add(link);
+        	trajectoryLane.add(lane);
+        	trajectoryTime.add(Double.toString(time));
+        	trajectoryDistance.add(Double.toString(distance));
+        	trajectorySpeed.add(Double.toString(speed));
+        }
+        
+        /** classes to create a storage structure to save sequence data with gtuId and simTime */
+        public class GtuSequenceData {
+        	// Map with simTime as key and {variable, values} as value
+            private Map<Double, DataPoint> dataPoints;
+
+            public GtuSequenceData() {
+                this.dataPoints = new LinkedHashMap<>();
+            }
+
+            public void addDataPoint(double simulationTime, String variable, Object value) {
+                DataPoint dataPoint = dataPoints.getOrDefault(simulationTime, new DataPoint(simulationTime));
+                dataPoint.addValue(variable, value);
+                dataPoints.put(simulationTime, dataPoint);
+            }
+
+            public Collection<DataPoint> getDataPoints() {
+                return dataPoints.values();
+            }
+        }
+        
+        public class DataPoint {
+            private double simulationTime;
+            private Map<String, Object> values;
+
+            public DataPoint(double simulationTime) {
+                this.simulationTime = simulationTime;
+                this.values = new LinkedHashMap<>();
+            }
+
+            public double getSimulationTime() {
+                return simulationTime;
+            }
+
+            public Map<String, Object> getValues() {
+                return values;
+            }
+
+            public void addValue(String key, Object value) {
+                this.values.put(key, value);
+            }
         }
         
     }

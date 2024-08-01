@@ -1,5 +1,7 @@
 package sim.demo;
 
+import java.util.ArrayList;
+
 import org.opentrafficsim.core.gtu.GtuType;
 import org.opentrafficsim.core.parameters.ParameterFactoryByType;
 
@@ -7,25 +9,22 @@ import org.opentrafficsim.core.parameters.ParameterFactoryByType;
  * Class to encapsulate created automation vehicle types and corresponding parameters.
  */
 public class VehicleConfigurationsBundle {
-    private final GtuType hdvCar;
-    private final GtuType avCar;
+    private final ArrayList<GtuType> automationGtuTypes;
     private final ParameterFactoryByType parameterFactory;
 
-    public VehicleConfigurationsBundle(GtuType hdvCar, GtuType avCar, ParameterFactoryByType parameterFactory) {
-        this.hdvCar = hdvCar;
-        this.avCar = avCar;
+    public VehicleConfigurationsBundle(ArrayList<GtuType> automationGtuTypes, ParameterFactoryByType parameterFactory)
+    {
+        this.automationGtuTypes = automationGtuTypes;
         this.parameterFactory = parameterFactory;
     }
 
-    public GtuType getHdvCar() {
-        return hdvCar;
+    public ArrayList<GtuType> getAutomationGtuTypes()
+    {
+    	return automationGtuTypes;
     }
 
-    public GtuType getAvCar() {
-        return avCar;
-    }
-
-    public ParameterFactoryByType getParameterFactory() {
+    public ParameterFactoryByType getParameterFactory()
+    {
         return parameterFactory;
     }
 }

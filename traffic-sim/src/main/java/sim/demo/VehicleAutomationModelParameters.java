@@ -10,7 +10,10 @@ public class VehicleAutomationModelParameters
 	private boolean headless;
 	private long seed;
 	private double simTime;
-    private double avFraction;
+    private double level0Fraction;
+    private double level1Fraction;
+    private double level2Fraction;
+    private double level3Fraction;
     private double leftFraction;
     private double mainDemand;
     private double rampDemand;
@@ -18,16 +21,24 @@ public class VehicleAutomationModelParameters
     private double tMin;
     private double tMax;
     private String singleOutputFilePath;
+    private String intermediateMeanValuesFilePath;
     private String sequenceOutputFilePath;
+    private String trajectoryOutputFilePath;
 
     // define simulation parameters in constructor
-    public VehicleAutomationModelParameters(boolean headless, long seed, double simTime, double avFraction, double leftFraction,
-    						  double mainDemand, double rampDemand, boolean additionalIncentives, double tMin,
-    						  double tMax, String singleOutputFilePath, String sequenceOutputFilePath) {
+    public VehicleAutomationModelParameters(boolean headless, long seed, double simTime, double level0Fraction, 
+    										double level1Fraction, double level2Fraction, double level3Fraction, 
+    										double leftFraction, double mainDemand, double rampDemand, 
+    										boolean additionalIncentives, double tMin, double tMax, 
+    										String singleOutputFilePath, String intermediateMeanValuesFilePath,
+    										String sequenceOutputFilePath, String trajectoryOutputFilePath) {
     	this.headless = headless;
     	this.seed = seed;
         this.simTime = simTime;
-        this.avFraction = avFraction;
+        this.level0Fraction = level0Fraction;
+        this.level1Fraction = level1Fraction;
+        this.level2Fraction = level2Fraction;
+        this.level3Fraction = level3Fraction;
         this.leftFraction = leftFraction;
         this.mainDemand = mainDemand;
         this.rampDemand = rampDemand;
@@ -35,7 +46,9 @@ public class VehicleAutomationModelParameters
         this.tMin = tMin;
         this.tMax = tMax;
         this.singleOutputFilePath = singleOutputFilePath;
+        this.intermediateMeanValuesFilePath = intermediateMeanValuesFilePath;
         this.sequenceOutputFilePath = sequenceOutputFilePath;
+        this.trajectoryOutputFilePath = trajectoryOutputFilePath;
     }
     
     // create getters and setters for the available parameters
@@ -60,11 +73,32 @@ public class VehicleAutomationModelParameters
         this.simTime = simTime;
     }
 
-    public double getAvFraction() {
-        return avFraction;
+    public double getLevel0Fraction() {
+        return level0Fraction;
     }
-    public void setAvFraction(double avFraction) {
-        this.avFraction = avFraction;
+    public void setLevel0Fraction(double level0Fraction) {
+        this.level0Fraction = level0Fraction;
+    }
+    
+    public double getLevel1Fraction() {
+        return level1Fraction;
+    }
+    public void setLevel1Fraction(double level1Fraction) {
+        this.level1Fraction = level1Fraction;
+    }
+    
+    public double getLevel2Fraction() {
+        return level2Fraction;
+    }
+    public void setLevel2Fraction(double level2Fraction) {
+        this.level2Fraction = level2Fraction;
+    }
+    
+    public double getLevel3Fraction() {
+        return level3Fraction;
+    }
+    public void setLevel3Fraction(double level3Fraction) {
+        this.level3Fraction = level3Fraction;
     }
     
     public double getLeftFraction() {
@@ -116,11 +150,25 @@ public class VehicleAutomationModelParameters
         this.singleOutputFilePath = singleOutputFilePath;
     }
     
+    public String getIntermediateMeanValuesFilePath() {
+        return intermediateMeanValuesFilePath;
+    }
+    public void setIntermediateMeanValuesFilePath(String intermediateMeanValuesFilePath) {
+        this.intermediateMeanValuesFilePath = intermediateMeanValuesFilePath;
+    }
+    
     public String getSequenceOutputFilePath() {
         return sequenceOutputFilePath;
     }
     public void setSequenceOutPutFilePath(String sequenceOutputFilePath) {
         this.sequenceOutputFilePath = sequenceOutputFilePath;
+    }
+    
+    public String getTrajectoryOutputFilePath() {
+        return trajectoryOutputFilePath;
+    }
+    public void setTrajectoryOutPutFilePath(String trajectoryOutputFilePath) {
+        this.trajectoryOutputFilePath = trajectoryOutputFilePath;
     }
 
 }

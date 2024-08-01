@@ -1,10 +1,8 @@
-from ema_workbench import Model, MultiprocessingEvaluator, perform_experiments, Constant, RealParameter, ScalarOutcome, SequentialEvaluator
-from ema_workbench.em_framework.samplers import LHSSampler as lh_sampler
 import pandas as pd
 import os
-import matplotlib.pyplot as plt
-import seaborn as sns
 from ots_models.ots_vehicle_automation_model import VehicleAutomationModel
+from ema_workbench import (Model, MultiprocessingEvaluator, perform_experiments, Constant, RealParameter,
+                           ScalarOutcome, SequentialEvaluator)
 
 
 # run EMA-Workbench experiment
@@ -31,14 +29,17 @@ if __name__ == '__main__':
     ema_model = Model('VehicleAutomationModel', function=ots_model.run_model)
 
     # define model constants
-    ema_model.constants = [Constant('sim_time', 240)]  # 28800 8 hours of traffic simulation, 1800 is 30 min
+    ema_model.constants = [Constant('sim_time', 200)]  # 28800 8 hours of traffic simulation, 1800 is 30 min
 
     # define uncertain variables
     ema_model.uncertainties = [RealParameter('main_demand', 1000, 6000),
                                RealParameter('ramp_demand', 800, 1000)]
 
-    # set levers
-    ema_model.levers = [RealParameter('av_fraction', 0.0, 1.0)]
+    # set remaining levers
+    ema_model.levers = [RealParameter('level0_fraction', 0.0, 1.0),
+                        RealParameter('level1_fraction', 0.0, 1.0),
+                        RealParameter('level2_fraction', 0.0, 1.0),
+                        RealParameter('level3_fraction', 0.0, 1.0)]
 
     # list outcome variables of interest
     ema_model.outcomes = [ScalarOutcome('meanDensity'),
@@ -57,9 +58,9 @@ if __name__ == '__main__':
     # run experiments
     # MultiprocessingEvaluator will run multiple simulations at the same time, but laptop memory cannot handle this
     with SequentialEvaluator(ema_model) as evaluator:
-        n_scenarios = 30
-        n_policies = 4
-        results = evaluator.perform_experiments(scenarios=n_scenarios, policies=n_policies)
+        num_scenarios = 4
+        num_policies = 4
+        results = evaluator.perform_experiments(scenarios=num_scenarios, policies=num_policies)
 
     # unpack results
     experiments, outcomes = results

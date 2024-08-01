@@ -1,5 +1,6 @@
 # imports
 import os
+import glob
 import subprocess
 
 
@@ -43,13 +44,19 @@ class JavaManager:
         classpath_file = open(classpath_file_path, 'r')
         self.classpath = classpath_file.read().strip()
 
-        # directory for java classes (in same folder, see Eclipse project)
-        source_dir = self.compilation_folder
+        # directories for java classes (see Eclipse project)
+        # find all .java files in the source directory and subdirectories
+        java_files = glob.glob(os.path.join(self.compilation_folder, '**', '*.java'), recursive=True)
+
+        # ensure that the output directory exists
         output_dir = self.compilation_folder
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir)
+
         # compile all Java files in the src/main/java directory
         compilation_result = subprocess.run([java_compiler, "-cp", self.classpath, "-d",
-                                             output_dir, source_dir + "/*.java"],
-                                            capture_output=True, text=True, shell=True)
+                                             output_dir] + java_files,
+                                            capture_output=True, text=True)
 
         # process compiler errors
         if compilation_result.returncode != 0:

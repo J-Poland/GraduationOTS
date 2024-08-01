@@ -11,6 +11,16 @@ class VehicleAutomationModel:
 
     # initialize this object
     def __init__(self, experiment_name, seed=0, user_feedback=True):
+        # input variables
+        self.experiment_name = experiment_name
+        self.seed = seed
+        self.user_feedback = user_feedback
+
+        # class variables
+        self.java_file = None
+        self.replication_count = None
+        self.original_os_dir = None
+
         # set Java file path
         self.java_file_path = r'C:\Users\jesse\Documents\Java\TrafficSimulation-workspace' \
                               r'\traffic-sim\src\main\java\sim\demo\RunVehicleAutomationModel.java'
@@ -21,24 +31,18 @@ class VehicleAutomationModel:
 
         # output data folder
         self.output_folder = r'C:\Users\jesse\Documents\Java\TrafficSimulation-workspace' \
-                             r'\traffic-sim\src\main\resources'
+                             fr'\traffic-sim\src\main\resources\{self.experiment_name}_{self.replication_count}'
 
         # output file name
         self.output_file_name = r'singleOutputData.csv'
 
         # classpath
+        # get classpath from Maven project
+        # run project as Maven project
+        # set Goals field: dependency:build-classpath -DincludeScope=runtime
+        # then run and paste resulting string into classpath.txt
         self.class_path_file = r'C:\Users\jesse\Documents\EPA_TUDelft\MasterThesis\thesis_experiments' \
                                r'\ots_models\classpath.txt'
-
-        # input variables
-        self.experiment_name = experiment_name
-        self.seed = seed
-        self.user_feedback = user_feedback
-
-        # class variables
-        self.java_file = None
-        self.replication_count = None
-        self.original_os_dir = None
 
     # function to compile project
     def compile_project(self):
@@ -54,7 +58,8 @@ class VehicleAutomationModel:
         self.original_os_dir = self.java_file.original_os_dir
 
     # function to start the simulation's Java model
-    def run_simulation(self, sim_time, av_fraction, main_demand, ramp_demand):
+    def run_simulation(self, sim_time, level0_fraction, level1_fraction, level2_fraction, level3_fraction,
+                       main_demand, ramp_demand):
         # run simulation headless. With animation is still subject to errors, why?
         run_headless = 'true'
 
@@ -66,18 +71,24 @@ class VehicleAutomationModel:
             f'-headless={run_headless}',
             f'-seed={seed}',
             f'-simTime={sim_time}',
-            f'-avFraction={av_fraction}',
+            f'-level0Fraction={level0_fraction}',
+            f'-level1Fraction={level1_fraction}',
+            f'-level2Fraction={level2_fraction}',
+            f'-level3Fraction={level3_fraction}',
             f'-mainDemand={main_demand}',
-            f'-rampDemand={ramp_demand}'
+            f'-rampDemand={ramp_demand}',
+            rf'-singleOutputFilePath={self.output_folder}\\singleOutputData.csv',
+            rf'-intermediateMeanValuesFilePath={self.output_folder}\\intermediateOutputData.csv',
+            rf'-sequenceOutputFilePath={self.output_folder}\\sequenceOutputData.csv',
+            rf'-trajectoryOutputFilePath={self.output_folder}\\trajectoryOutputData.csv'
         ]
 
         # compile and run Java file
         self.java_file.java_parameters = input_parameters
         self.java_file.run_java_file()
 
-    # function to automatically save detailed/sequential output data
-    def save_detailed_output_data(self, results_folder):
-        pass
+        # return corresponding output folder and file name
+        return self.output_folder, self.output_file_name
 
     # function to load simulation output
     def load_simulation_output(self, output_folder_path, output_file_name, detailed_output_file_name=None,
@@ -116,7 +127,6 @@ class VehicleAutomationModel:
 
     # function to run the simulation model for the EMA Workbench and return model output
     def run_model(self, **kwargs):
-
         # count replications
         if self.replication_count is None:
             self.replication_count = 0
@@ -125,15 +135,20 @@ class VehicleAutomationModel:
 
         # unpack experiment details
         sim_time = kwargs['sim_time']
-        av_fraction = kwargs['av_fraction']
+        level0_fraction = kwargs['level0_fraction']
+        level1_fraction = kwargs['level1_fraction']
+        level2_fraction = kwargs['level2_fraction']
+        level3_fraction = kwargs['level3_fraction']
         main_demand = kwargs['main_demand']
         ramp_demand = kwargs['ramp_demand']
 
         # run model
-        self.run_simulation(sim_time, av_fraction, main_demand, ramp_demand)
+        this_output_folder, this_output_file_name = self.run_simulation(sim_time, level0_fraction, level1_fraction,
+                                                                        level2_fraction, level3_fraction,
+                                                                        main_demand, ramp_demand)
 
         # retrieve output data
-        output = self.load_simulation_output(self.output_folder, self.output_file_name)
+        output = self.load_simulation_output(this_output_folder, this_output_file_name)
 
         # return output data
         return output

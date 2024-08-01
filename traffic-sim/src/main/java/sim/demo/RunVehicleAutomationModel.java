@@ -21,8 +21,17 @@ public class RunVehicleAutomationModel implements Runnable
     @Option(names = "-simTime", description = "Simulation time.", defaultValue = "360.0")
     private double simTime;
 
-    @Option(names = "-avFraction", description = "Fraction of AVs.", defaultValue = "0.15")
-    private double avFraction;
+    @Option(names = "-level0Fraction", description = "Fraction of level 0 vehicles.", defaultValue = "0.25")
+    private double level0Fraction;
+    
+    @Option(names = "-level1Fraction", description = "Fraction of level 1 vehicles.", defaultValue = "0.25")
+    private double level1Fraction;
+    
+    @Option(names = "-level2Fraction", description = "Fraction of level 2 vehicles.", defaultValue = "0.25")
+    private double level2Fraction;
+    
+    @Option(names = "-level3Fraction", description = "Fraction of level 3 vehicles.", defaultValue = "0.25")
+    private double level3Fraction;
     
     @Option(names = "-leftFraction", description = "Left traffic fraction.", defaultValue = "0.8")
     private double leftFraction;
@@ -33,7 +42,7 @@ public class RunVehicleAutomationModel implements Runnable
     @Option(names = "-rampDemand", description = "Left traffic fraction.", defaultValue = "500") // 500
     private double rampDemand;
     
-    @Option(names = "-additionalIncentives", description = "...", negatable=false, defaultValue = "true")
+    @Option(names = "-additionalIncentives", description = "Enable additional lane change and speed incentives.", negatable=false, defaultValue = "true")
     private boolean additionalIncentives;
     
     @Option(names = "-tMin", description = "...", negatable=false, defaultValue = "0.56")
@@ -47,11 +56,20 @@ public class RunVehicleAutomationModel implements Runnable
     					   + "src\\main\\resources\\singleOutputData.csv")
     private String singleOutputFilePath;
     
+    @Option(names = "-intermediateMeanValuesFilePath", description = "File location for simulation output storage.", 
+    		defaultValue = "C:\\Users\\jesse\\Documents\\Java\\TrafficSimulation-workspace\\traffic-sim\\"
+    					   + "src\\main\\resources\\intermediateOutputData.csv")
+    private String intermediateMeanValuesFilePath;
+    
     @Option(names = "-sequenceOutputFilePath", description = "File location for simulation output storage.", 
     		defaultValue = "C:\\Users\\jesse\\Documents\\Java\\TrafficSimulation-workspace\\traffic-sim\\"
     					   + "src\\main\\resources\\sequenceOutputData.csv")
     private String sequenceOutputFilePath;
     
+    @Option(names = "-trajectoryOutputFilePath", description = "File location for simulation output storage.", 
+    		defaultValue = "C:\\Users\\jesse\\Documents\\Java\\TrafficSimulation-workspace\\traffic-sim\\"
+    					   + "src\\main\\resources\\newfolder\\trajectoryOutputData.csv")
+    private String trajectoryOutputFilePath;
     
     /**
      * Runnable method that will be executed by picocli from main.
@@ -83,8 +101,12 @@ public class RunVehicleAutomationModel implements Runnable
     
     // method to bundle the input variables into one configuration object
     public VehicleAutomationModelParameters createConfig() {
-        return new VehicleAutomationModelParameters(headless, seed, simTime, avFraction, leftFraction, mainDemand, rampDemand,
-        							  additionalIncentives, tMin, tMax, singleOutputFilePath, sequenceOutputFilePath);
+        return new VehicleAutomationModelParameters(headless, seed, simTime,
+        											level0Fraction, level1Fraction, level2Fraction, level3Fraction,
+        											leftFraction, mainDemand, rampDemand,
+        											additionalIncentives, tMin, tMax, 
+        											singleOutputFilePath, intermediateMeanValuesFilePath,
+        											sequenceOutputFilePath, trajectoryOutputFilePath);
     }
     
 }

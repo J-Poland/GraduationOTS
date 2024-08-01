@@ -131,8 +131,8 @@
 
   <ots:Network>
     <ots:Node Id="A" Coordinate="(0, 0)" Direction="0 deg(E)" />
-    <ots:Node Id="B" Coordinate="(900, 0)" Direction="0 deg(E)" />
-    <ots:Node Id="C" Coordinate="(1100, 0)" Direction="0 deg(E)" />
+    <ots:Node Id="B" Coordinate="(875, 0)" Direction="0 deg(E)" />
+    <ots:Node Id="C" Coordinate="(1125, 0)" Direction="0 deg(E)" />
     <ots:Node Id="D" Coordinate="(2000, 0)" Direction="0 deg(E)" />
     <ots:Node Id="E" Coordinate="(480, -40)" Direction="0 deg(E)" />
     <ots:Node Id="E2" Coordinate="(500, -40)" Direction="0 deg(E)" />

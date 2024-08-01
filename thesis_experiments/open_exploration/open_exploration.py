@@ -55,12 +55,6 @@ if __name__ == '__main__':
     ax.set_title('Density vs Flow')
     ax.set(xlabel='Density (veh/km)', ylabel='Flow (veh/h)')
     ax.legend()
-
     plt.show()
 
-    fig, ax = plt.subplots(1, 1, figsize=(6, 6))
-    ax.scatter(df_data['av_fraction'], df_data['meanHeadwayTime'])
-    ax.set(xlabel='av_fraction', ylabel='meanHeadwayTime')
-    ax.legend()
-    plt.show()
 
