@@ -10,7 +10,7 @@ Created by: Jesse Poland
 This README file is created to explain the folder structure and content for running and analysing OpenTrafficSim (OTS) models from Python. Python is used to utilize the extensive exploration tools of the EMA_Workbench and use other Python packages for analysing output data and creating visualisations.
 
 # Setting up the environment
-The environment can be created using the requirements.txt file, which contains all Python package dependencies to run all code within the project. To install these packages in PyCharm, double click the requirements.txt file.
+The environment can be created using the requirements.txt file, which contains all Python package dependencies to run all code within the project. To install these packages in PyCharm, choose "Sync Python Requirements..." in the Tools tab and select this requirements.txt file.
 
 # Running OTS models
 Python scripts containing the OTS models are saved in the ots_models folder. An example of how to define an OTS model in python is present in ots_vehicle_automation_model.py.
