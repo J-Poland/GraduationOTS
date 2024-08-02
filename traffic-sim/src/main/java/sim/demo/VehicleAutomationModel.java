@@ -113,7 +113,6 @@ import sim.demo.mental.CustomAdaptationSituationalAwareness;
 import sim.demo.mental.LaneChangeTask;
 import sim.demo.mental.TaskManagerAr;
 
-import org.opentrafficsim.road.gtu.lane.perception.AbstractLanePerception;
 import org.opentrafficsim.road.gtu.lane.perception.CategoricalLanePerception;
 import org.opentrafficsim.road.gtu.lane.perception.LanePerception;
 import org.opentrafficsim.road.gtu.lane.perception.PerceptionCollectable;
@@ -849,7 +848,7 @@ public class VehicleAutomationModel extends AbstractOtsModel implements EventLis
 	public HeadwayInfo calculateHeadwayInfo(Gtu gtu) throws OperationalPlanException, ParameterException {
 	    if (gtu instanceof LaneBasedGtu) {
 	        LaneBasedGtu laneBasedGtu = (LaneBasedGtu) gtu;
-	        AbstractLanePerception perception = (AbstractLanePerception) laneBasedGtu.getTacticalPlanner().getPerception();
+	        CategoricalLanePerception perception = (CategoricalLanePerception) laneBasedGtu.getTacticalPlanner().getPerception();
 
 	        DirectNeighborsPerception neighborPerception = perception.getPerceptionCategory(DirectNeighborsPerception.class);
 	        

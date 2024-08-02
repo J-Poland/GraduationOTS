@@ -44,7 +44,7 @@ public interface CustomCooperation extends Cooperation
 {
 
     /** Simple passive cooperation. */
-    CustomCooperation PASSIVE = new CustomCooperation()
+    Cooperation PASSIVE = new Cooperation()
     {
         /** {@inheritDoc} */
         @Override
@@ -52,8 +52,7 @@ public interface CustomCooperation extends Cooperation
                 final CarFollowingModel cfm, final LateralDirectionality lat, final Desire ownDesire)
                 throws ParameterException, OperationalPlanException
         {
-            if ((lat.isLeft() && !perception.getLaneStructure().getExtendedCrossSection().contains(RelativeLane.LEFT))
-                    || (lat.isRight() && !perception.getLaneStructure().getExtendedCrossSection().contains(RelativeLane.RIGHT)))
+            if (!perception.getLaneStructure().exists(lat.isRight() ? RelativeLane.RIGHT : RelativeLane.LEFT))
             {
                 return new Acceleration(Double.MAX_VALUE, AccelerationUnit.SI);
             }
@@ -69,19 +68,15 @@ public interface CustomCooperation extends Cooperation
 				try {
 					laneChangeBehavior = new LaneChangingBehavior(perception.getGtu());
 				} catch (OperationalPlanException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				} catch (ParameterException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				} catch (GtuException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
-            	
+				
                 Parameters params2 = leader.getParameters();
                 double desire = lat.equals(LateralDirectionality.LEFT) ? params2.getParameter(DRIGHT)
                         : lat.equals(LateralDirectionality.RIGHT) ? params2.getParameter(DLEFT) : 0;
+                
                 // adjust DCOOP to leader
                 if (laneChangeBehavior != null) {
                 	double adjustment = laneChangeBehavior.adaptToLaneChangingVehicle(leader);
@@ -102,7 +97,7 @@ public interface CustomCooperation extends Cooperation
             }
             return Acceleration.max(a, b.neg());
         }
-        
+
         /** {@inheritDoc} */
         @Override
         public String toString()
@@ -112,7 +107,7 @@ public interface CustomCooperation extends Cooperation
     };
 
     /** Same as passive cooperation, except that cooperation is fully ignored if the potential lane changer brakes heavily. */
-    CustomCooperation PASSIVE_MOVING = new CustomCooperation()
+    Cooperation PASSIVE_MOVING = new Cooperation()
     {
         /** {@inheritDoc} */
         @Override
@@ -120,8 +115,7 @@ public interface CustomCooperation extends Cooperation
                 final CarFollowingModel cfm, final LateralDirectionality lat, final Desire ownDesire)
                 throws ParameterException, OperationalPlanException
         {
-            if ((lat.isLeft() && !perception.getLaneStructure().getExtendedCrossSection().contains(RelativeLane.LEFT))
-                    || (lat.isRight() && !perception.getLaneStructure().getExtendedCrossSection().contains(RelativeLane.RIGHT)))
+            if (!perception.getLaneStructure().exists(lat.isRight() ? RelativeLane.RIGHT : RelativeLane.LEFT))
             {
                 return new Acceleration(Double.MAX_VALUE, AccelerationUnit.SI);
             }
@@ -132,22 +126,17 @@ public interface CustomCooperation extends Cooperation
             RelativeLane relativeLane = new RelativeLane(lat, 1);
             NeighborsPerception neighbours = perception.getPerceptionCategory(NeighborsPerception.class);
             PerceptionCollectable<HeadwayGtu, LaneBasedGtu> leaders = neighbours.getLeaders(RelativeLane.CURRENT);
-            Speed thresholdSpeed = Speed.instantiateSI(40.0 / 3.6);
+            Speed thresholdSpeed = Speed.instantiateSI(6.86); // 295m / 43s
             boolean leaderInCongestion = leaders.isEmpty() ? false : leaders.first().getSpeed().lt(thresholdSpeed);
             for (HeadwayGtu leader : neighbours.getLeaders(relativeLane))
             {
-            	// create behaviour with current leader (potentially changing lanes)
+            	// adjust DCOOP parameter because of leader (potentially changing lanes) vehicle type
             	LaneChangingBehavior laneChangeBehavior = null;
 				try {
 					laneChangeBehavior = new LaneChangingBehavior(perception.getGtu());
 				} catch (OperationalPlanException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				} catch (ParameterException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				} catch (GtuException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
 				
@@ -179,7 +168,7 @@ public interface CustomCooperation extends Cooperation
             }
             return Acceleration.max(a, bCrit.neg());
         }
-        
+
         /** {@inheritDoc} */
         @Override
         public String toString()
@@ -189,7 +178,7 @@ public interface CustomCooperation extends Cooperation
     };
 
     /** Cooperation similar to the default, with nuanced differences of when to ignore. */
-    CustomCooperation ACTIVE = new CustomCooperation()
+    Cooperation ACTIVE = new Cooperation()
     {
         /** {@inheritDoc} */
         @Override
@@ -197,9 +186,7 @@ public interface CustomCooperation extends Cooperation
                 final CarFollowingModel cfm, final LateralDirectionality lat, final Desire ownDesire)
                 throws ParameterException, OperationalPlanException
         {
-
-            if ((lat.isLeft() && !perception.getLaneStructure().getExtendedCrossSection().contains(RelativeLane.LEFT))
-                    || (lat.isRight() && !perception.getLaneStructure().getExtendedCrossSection().contains(RelativeLane.RIGHT)))
+            if (!perception.getLaneStructure().exists(lat.isRight() ? RelativeLane.RIGHT : RelativeLane.LEFT))
             {
                 return new Acceleration(Double.MAX_VALUE, AccelerationUnit.SI);
             }
@@ -209,24 +196,20 @@ public interface CustomCooperation extends Cooperation
             RelativeLane relativeLane = new RelativeLane(lat, 1);
             for (HeadwayGtu leader : perception.getPerceptionCategory(NeighborsPerception.class).getLeaders(relativeLane))
             {
-            	// create behaviour with current leader (potentially changing lanes)
+            	// adjust DCOOP parameter because of leader (potentially changing lanes) vehicle type
             	LaneChangingBehavior laneChangeBehavior = null;
 				try {
 					laneChangeBehavior = new LaneChangingBehavior(perception.getGtu());
 				} catch (OperationalPlanException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				} catch (ParameterException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				} catch (GtuException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
 				
                 Parameters params2 = leader.getParameters();
                 double desire = lat.equals(LateralDirectionality.LEFT) ? params2.getParameter(DRIGHT)
                         : lat.equals(LateralDirectionality.RIGHT) ? params2.getParameter(DLEFT) : 0;
+                
                 // adjust DCOOP to leader
                 if (laneChangeBehavior != null) {
                 	double adjustment = laneChangeBehavior.adaptToLaneChangingVehicle(leader);
@@ -249,7 +232,7 @@ public interface CustomCooperation extends Cooperation
             }
             return a;
         }
-        
+
         /** {@inheritDoc} */
         @Override
         public String toString()
