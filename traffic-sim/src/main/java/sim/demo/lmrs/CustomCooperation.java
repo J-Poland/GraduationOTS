@@ -52,7 +52,8 @@ public interface CustomCooperation extends Cooperation
                 final CarFollowingModel cfm, final LateralDirectionality lat, final Desire ownDesire)
                 throws ParameterException, OperationalPlanException
         {
-            if (!perception.getLaneStructure().exists(lat.isRight() ? RelativeLane.RIGHT : RelativeLane.LEFT))
+        	if ((lat.isLeft() && !perception.getLaneStructure().getExtendedCrossSection().contains(RelativeLane.LEFT))
+                    || (lat.isRight() && !perception.getLaneStructure().getExtendedCrossSection().contains(RelativeLane.RIGHT)))
             {
                 return new Acceleration(Double.MAX_VALUE, AccelerationUnit.SI);
             }
@@ -70,6 +71,8 @@ public interface CustomCooperation extends Cooperation
 				} catch (OperationalPlanException e) {
 					e.printStackTrace();
 				} catch (ParameterException e) {
+					e.printStackTrace();
+				} catch (GtuException e) {
 					e.printStackTrace();
 				}
 				
@@ -115,7 +118,8 @@ public interface CustomCooperation extends Cooperation
                 final CarFollowingModel cfm, final LateralDirectionality lat, final Desire ownDesire)
                 throws ParameterException, OperationalPlanException
         {
-            if (!perception.getLaneStructure().exists(lat.isRight() ? RelativeLane.RIGHT : RelativeLane.LEFT))
+        	if ((lat.isLeft() && !perception.getLaneStructure().getExtendedCrossSection().contains(RelativeLane.LEFT))
+                    || (lat.isRight() && !perception.getLaneStructure().getExtendedCrossSection().contains(RelativeLane.RIGHT)))
             {
                 return new Acceleration(Double.MAX_VALUE, AccelerationUnit.SI);
             }
@@ -137,6 +141,8 @@ public interface CustomCooperation extends Cooperation
 				} catch (OperationalPlanException e) {
 					e.printStackTrace();
 				} catch (ParameterException e) {
+					e.printStackTrace();
+				} catch (GtuException e) {
 					e.printStackTrace();
 				}
 				
@@ -186,7 +192,8 @@ public interface CustomCooperation extends Cooperation
                 final CarFollowingModel cfm, final LateralDirectionality lat, final Desire ownDesire)
                 throws ParameterException, OperationalPlanException
         {
-            if (!perception.getLaneStructure().exists(lat.isRight() ? RelativeLane.RIGHT : RelativeLane.LEFT))
+        	if ((lat.isLeft() && !perception.getLaneStructure().getExtendedCrossSection().contains(RelativeLane.LEFT))
+                    || (lat.isRight() && !perception.getLaneStructure().getExtendedCrossSection().contains(RelativeLane.RIGHT)))
             {
                 return new Acceleration(Double.MAX_VALUE, AccelerationUnit.SI);
             }
@@ -203,6 +210,8 @@ public interface CustomCooperation extends Cooperation
 				} catch (OperationalPlanException e) {
 					e.printStackTrace();
 				} catch (ParameterException e) {
+					e.printStackTrace();
+				} catch (GtuException e) {
 					e.printStackTrace();
 				}
 				

@@ -207,6 +207,7 @@ public class VehicleAutomationModel extends AbstractOtsModel implements EventLis
     /** Last recording of output trajectory data*/
     private double trajectoryLastTime;
 	
+    private int calculations = 0;
 	
 	// input parameters
 	
@@ -374,6 +375,8 @@ public class VehicleAutomationModel extends AbstractOtsModel implements EventLis
 			System.out.println("Simulation stop time: " + this.simulator.getSimulatorAbsTime().si);
 			
 			System.out.println("Stop simulation.");
+			
+			System.out.println("Calculations: " + calculations);
 			
 			saveFdValues();
 			
@@ -1024,6 +1027,8 @@ public class VehicleAutomationModel extends AbstractOtsModel implements EventLis
      */
     private void recalculateFdValues() {
     	
+    	calculations += 1;
+    	
     	// recalculate values
         this.source.recalculate(this.simulator.getSimulatorAbsTime());
         
@@ -1065,6 +1070,8 @@ public class VehicleAutomationModel extends AbstractOtsModel implements EventLis
         if (latestIndex > 0) {
         	latestIndex -= 1;
         }
+        
+        System.out.println("Source: " + this.source.getItemCount(0));
         
         // process all calculated values
         for (int i = 0; i < latestIndex; i++) {

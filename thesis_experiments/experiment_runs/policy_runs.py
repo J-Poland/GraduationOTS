@@ -56,7 +56,7 @@ if __name__ == '__main__':
     policies = define_policies()
 
     # define model constants
-    ema_model.constants = [Constant('sim_time', 1800)]  # 28800 8 hours of traffic simulation, 1800 is 30 min
+    ema_model.constants = [Constant('sim_time', 360)]  # 28800 8 hours of traffic simulation, 1800 is 30 min
 
     # define levers outside of policies
     ema_model.levers = []
@@ -89,7 +89,7 @@ if __name__ == '__main__':
     # run experiments
     # MultiprocessingEvaluator will run multiple simulations at the same time, but laptop memory cannot handle this
     with SequentialEvaluator(ema_model) as evaluator:
-        num_scenarios = 10
+        num_scenarios = 4
         results = evaluator.perform_experiments(policies=policies, scenarios=num_scenarios)
 
     # unpack results

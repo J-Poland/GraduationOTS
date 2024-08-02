@@ -83,39 +83,39 @@ public class VehicleAutomationApplication extends OtsSimulationApplication<Vehic
 	/** {@inheritDoc} */
 	@Override
 	protected void addTabs() {
-		GraphPath<LaneDataRoad> path;
-		try {
-			Lane start = ((CrossSectionLink) getModel().getNetwork().getLink("AB")).getLanes().get(1);
-			path = GraphLaneUtil.createPath("Right lane", start);
-		} catch (NetworkException exception) {
-			throw new RuntimeException("Could not create a path as a lane has no set speed limit.", exception);
-		}
-		RoadSampler sampler = new RoadSampler(getModel().getNetwork());
-		GraphPath.initRecording(sampler, path);
-		PlotScheduler scheduler = new OtsPlotScheduler(getModel().getSimulator());
-		Duration updateInterval = Duration.instantiateSI(10.0);
-		SwingPlot plot = new SwingTrajectoryPlot(
-				new TrajectoryPlot("Trajectory right lane", updateInterval, scheduler, sampler.getSamplerData(), path));
-		getAnimationPanel().getTabbedPane().addTab(getAnimationPanel().getTabbedPane().getTabCount(), "Trajectories",
-				plot.getContentPane());
-		
-		// define cross section to base FD values on
-        List<String> names = new ArrayList<>();
-        names.add("FORWARD1");
-        names.add("FORWARD2");
-        Length lanePosition = Length.instantiateSI(0.0);	// link CD has a length of 1895 (1100 - 2000)
-        LinkPosition linkPosition = new LinkPosition(getModel().getNetwork().getLink("CD"), lanePosition);
-        GraphCrossSection<LaneDataRoad> crossSection;
-        try
-        {
-        	crossSection = GraphLaneUtil.createCrossSection(names, linkPosition);
-        }
-        catch (NetworkException exception)
-        {
-            throw new RuntimeException("Unable to create cross section.", exception);
-        }
-        
-		FdSource source = FundamentalDiagram.sourceFromSampler(sampler, crossSection, true, updateInterval, false);
+//		GraphPath<LaneDataRoad> path;
+//		try {
+//			Lane start = ((CrossSectionLink) getModel().getNetwork().getLink("AB")).getLanes().get(1);
+//			path = GraphLaneUtil.createPath("Right lane", start);
+//		} catch (NetworkException exception) {
+//			throw new RuntimeException("Could not create a path as a lane has no set speed limit.", exception);
+//		}
+//		RoadSampler sampler = new RoadSampler(getModel().getNetwork());
+//		GraphPath.initRecording(sampler, path);
+//		PlotScheduler scheduler = new OtsPlotScheduler(getModel().getSimulator());
+//		Duration updateInterval = Duration.instantiateSI(10.0);
+//		SwingPlot plot = new SwingTrajectoryPlot(
+//				new TrajectoryPlot("Trajectory right lane", updateInterval, scheduler, sampler.getSamplerData(), path));
+//		getAnimationPanel().getTabbedPane().addTab(getAnimationPanel().getTabbedPane().getTabCount(), "Trajectories",
+//				plot.getContentPane());
+//		
+//		// define cross section to base FD values on
+//        List<String> names = new ArrayList<>();
+//        names.add("FORWARD1");
+//        names.add("FORWARD2");
+//        Length lanePosition = Length.instantiateSI(0.0);	// link CD has a length of 1895 (1100 - 2000)
+//        LinkPosition linkPosition = new LinkPosition(getModel().getNetwork().getLink("CD"), lanePosition);
+//        GraphCrossSection<LaneDataRoad> crossSection;
+//        try
+//        {
+//        	crossSection = GraphLaneUtil.createCrossSection(names, linkPosition);
+//        }
+//        catch (NetworkException exception)
+//        {
+//            throw new RuntimeException("Unable to create cross section.", exception);
+//        }
+//        
+//		FdSource source = FundamentalDiagram.sourceFromSampler(sampler, crossSection, true, updateInterval, false);
 	}
 
 	/**

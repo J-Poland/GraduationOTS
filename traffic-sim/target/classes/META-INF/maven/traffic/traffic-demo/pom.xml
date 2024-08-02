@@ -17,10 +17,20 @@
     </properties>
 
     <dependencies>
-        <dependency>
-            <groupId>org.opentrafficsim</groupId>
-            <artifactId>ots-road</artifactId>
-            <version>1.7.4</version>
+		<dependency>
+        	<groupId>org.opentrafficsim</groupId>
+        	<artifactId>ots-animation</artifactId>
+        	<version>1.7.4</version>
+        </dependency>
+		<dependency>
+        	<groupId>org.opentrafficsim</groupId>
+        	<artifactId>ots-base</artifactId>
+        	<version>1.7.4</version>
+        </dependency>
+		<dependency>
+        	<groupId>org.opentrafficsim</groupId>
+        	<artifactId>ots-core</artifactId>
+        	<version>1.7.4</version>
         </dependency>
         <dependency>
             <groupId>org.opentrafficsim</groupId>
@@ -29,7 +39,57 @@
         </dependency>
         <dependency>
             <groupId>org.opentrafficsim</groupId>
+            <artifactId>ots-draw</artifactId>
+            <version>1.7.4</version>
+        </dependency>
+        <dependency>
+            <groupId>org.opentrafficsim</groupId>
+            <artifactId>ots-editor</artifactId>
+            <version>1.7.4</version>
+        </dependency>
+        <dependency>
+        	<groupId>org.opentrafficsim</groupId>
+        	<artifactId>ots-kpi</artifactId>
+        	<version>1.7.4</version>
+        </dependency>
+        <dependency>
+            <groupId>org.opentrafficsim</groupId>
+            <artifactId>ots-parser-xml</artifactId>
+            <version>1.7.4</version>
+        </dependency>
+        <dependency>
+            <groupId>org.opentrafficsim</groupId>
+            <artifactId>ots-road</artifactId>
+            <version>1.7.4</version>
+        </dependency>
+        <dependency>
+            <groupId>org.opentrafficsim</groupId>
+            <artifactId>ots-sim0mq</artifactId>
+            <version>1.7.4</version>
+        </dependency>
+        <dependency>
+            <groupId>org.opentrafficsim</groupId>
+            <artifactId>ots-sim0mq-kpi</artifactId>
+            <version>1.7.4</version>
+        </dependency>
+        <dependency>
+            <groupId>org.opentrafficsim</groupId>
+            <artifactId>ots-sim0mq-swing</artifactId>
+            <version>1.7.4</version>
+        </dependency>
+        <dependency>
+            <groupId>org.opentrafficsim</groupId>
             <artifactId>ots-swing</artifactId>
+            <version>1.7.4</version>
+        </dependency>
+        <dependency>
+            <groupId>org.opentrafficsim</groupId>
+            <artifactId>ots-trafficcontrol</artifactId>
+            <version>1.7.4</version>
+        </dependency>
+        <dependency>
+            <groupId>org.opentrafficsim</groupId>
+            <artifactId>ots-web</artifactId>
             <version>1.7.4</version>
         </dependency>
         <dependency>
@@ -38,14 +98,9 @@
             <version>4.6.1</version>
         </dependency>
         <dependency>
-        <groupId>de.siegmar</groupId>
-        <artifactId>fastcsv</artifactId>
-        <version>3.1.0</version>
-    </dependency>
-        <dependency>
-        	<groupId>org.opentrafficsim</groupId>
-        	<artifactId>ots-kpi</artifactId>
-        	<version>1.7.4</version>
-        </dependency>
+        	<groupId>de.siegmar</groupId>
+        	<artifactId>fastcsv</artifactId>
+        	<version>3.1.0</version>
+    	</dependency>
     </dependencies>
 </project>
