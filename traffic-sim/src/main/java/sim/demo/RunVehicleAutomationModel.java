@@ -18,7 +18,7 @@ public class RunVehicleAutomationModel implements Runnable
 	@Option(names = "-seed", description = "Set simulation seed.", defaultValue = "0")
     private long seed;
 	
-    @Option(names = "-simTime", description = "Simulation time.", defaultValue = "360.0")
+    @Option(names = "-simTime", description = "Simulation time.", defaultValue = "1800.0")
     private double simTime;
 
     @Option(names = "-level0Fraction", description = "Fraction of level 0 vehicles.", defaultValue = "0.25")
@@ -68,7 +68,7 @@ public class RunVehicleAutomationModel implements Runnable
     
     @Option(names = "-trajectoryOutputFilePath", description = "File location for simulation output storage.", 
     		defaultValue = "C:\\Users\\jesse\\Documents\\Java\\TrafficSimulation-workspace\\traffic-sim\\"
-    					   + "src\\main\\resources\\newfolder\\trajectoryOutputData.csv")
+    					   + "src\\main\\resources\\trajectoryOutputData.csv")
     private String trajectoryOutputFilePath;
     
     /**

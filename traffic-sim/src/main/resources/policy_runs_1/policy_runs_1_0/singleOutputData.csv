@@ -1,0 +1,2 @@
+criticalTtc,laneChangesToRightBeforeRamp,laneChangesToRightOnRamp,laneChangesToRightAfterRamp,laneChangesToLeftBeforeRamp,laneChangesToLeftOnRamp,laneChangesToLeftAfterRamp,meanHeadwayTime,meanHeadwayDistance,meanTravelTime,meanSpeed,meanDensity,meanFlow
+181141,222,56,93,278,572,0,2.32945451668306,66.70534368882714,59.82437362982974,NaN,NaN,NaN

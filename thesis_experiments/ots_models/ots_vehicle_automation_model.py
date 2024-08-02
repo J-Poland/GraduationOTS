@@ -29,9 +29,13 @@ class VehicleAutomationModel:
         self.java_project_folder = r'C:\Users\jesse\Documents\Java\TrafficSimulation-workspace' \
                                    r'\traffic-sim\src\main\java\sim\demo'
 
+        # set Java resources folder
+        self.resources_folder = r'C:\Users\jesse\Documents\Java\TrafficSimulation-workspace' \
+                                r'\traffic-sim\src\main\resources'
+
         # output data folder
-        self.output_folder = r'C:\Users\jesse\Documents\Java\TrafficSimulation-workspace' \
-                             fr'\traffic-sim\src\main\resources\{self.experiment_name}_{self.replication_count}'
+        self.output_folder = None
+        self.generate_output_folder()
 
         # output file name
         self.output_file_name = r'singleOutputData.csv'
@@ -43,6 +47,12 @@ class VehicleAutomationModel:
         # then run and paste resulting string into classpath.txt
         self.class_path_file = r'C:\Users\jesse\Documents\EPA_TUDelft\MasterThesis\thesis_experiments' \
                                r'\ots_models\classpath.txt'
+
+    # function to create output folder path
+    def generate_output_folder(self):
+        output_folder = os.path.join(self.resources_folder, f'{self.experiment_name}',
+                                     f'{self.experiment_name}_{self.replication_count}')
+        self.output_folder = output_folder
 
     # function to compile project
     def compile_project(self):
@@ -60,7 +70,11 @@ class VehicleAutomationModel:
     # function to start the simulation's Java model
     def run_simulation(self, sim_time, level0_fraction, level1_fraction, level2_fraction, level3_fraction,
                        main_demand, ramp_demand):
-        # run simulation headless. With animation is still subject to errors, why?
+        # get output folder for this run
+        output_path = self.output_folder
+
+        # run simulation headless (headless = 'true') or with animation window (headless = 'false')
+        # TODO: with animation is still subject to errors, why?
         run_headless = 'true'
 
         # get current seed
@@ -77,10 +91,10 @@ class VehicleAutomationModel:
             f'-level3Fraction={level3_fraction}',
             f'-mainDemand={main_demand}',
             f'-rampDemand={ramp_demand}',
-            rf'-singleOutputFilePath={self.output_folder}\\singleOutputData.csv',
-            rf'-intermediateMeanValuesFilePath={self.output_folder}\\intermediateOutputData.csv',
-            rf'-sequenceOutputFilePath={self.output_folder}\\sequenceOutputData.csv',
-            rf'-trajectoryOutputFilePath={self.output_folder}\\trajectoryOutputData.csv'
+            rf'-singleOutputFilePath={output_path}\\singleOutputData.csv',
+            rf'-intermediateMeanValuesFilePath={output_path}\\intermediateOutputData.csv',
+            rf'-sequenceOutputFilePath={output_path}\\sequenceOutputData.csv',
+            rf'-trajectoryOutputFilePath={output_path}\\trajectoryOutputData.csv'
         ]
 
         # compile and run Java file
@@ -88,7 +102,7 @@ class VehicleAutomationModel:
         self.java_file.run_java_file()
 
         # return corresponding output folder and file name
-        return self.output_folder, self.output_file_name
+        return output_path
 
     # function to load simulation output
     def load_simulation_output(self, output_folder_path, output_file_name, detailed_output_file_name=None,
@@ -133,6 +147,9 @@ class VehicleAutomationModel:
         else:
             self.replication_count += 1
 
+        # create output folder for this replication
+        self.generate_output_folder()
+
         # unpack experiment details
         sim_time = kwargs['sim_time']
         level0_fraction = kwargs['level0_fraction']
@@ -142,13 +159,14 @@ class VehicleAutomationModel:
         main_demand = kwargs['main_demand']
         ramp_demand = kwargs['ramp_demand']
 
-        # run model
-        this_output_folder, this_output_file_name = self.run_simulation(sim_time, level0_fraction, level1_fraction,
-                                                                        level2_fraction, level3_fraction,
-                                                                        main_demand, ramp_demand)
+        # run model (also receive fixed corresponding output path,
+        #            self. reference could be changed by parallel running simulations)
+        this_output_folder = self.run_simulation(sim_time, level0_fraction, level1_fraction,
+                                                 level2_fraction, level3_fraction,
+                                                 main_demand, ramp_demand)
 
         # retrieve output data
-        output = self.load_simulation_output(this_output_folder, this_output_file_name)
+        output = self.load_simulation_output(this_output_folder, self.output_file_name)
 
         # return output data
         return output

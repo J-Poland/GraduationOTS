@@ -358,6 +358,8 @@ public class VehicleAutomationModel extends AbstractOtsModel implements EventLis
 		if (event.getType().equals(SimulatorInterface.START_EVENT)) {
 			System.out.println("Start simulation.");
 			
+			System.out.println("Total simulation time: " + simTime.si);
+			
 			// initialise count output variables
 			outputDataManager.setSingleValue("criticalTtc", 0);
 			outputDataManager.setSingleValue("laneChangesToRightBeforeRamp", 0);
@@ -370,6 +372,8 @@ public class VehicleAutomationModel extends AbstractOtsModel implements EventLis
 		
 		// handle end of replication event
 		if (event.getType().equals(SimulatorInterface.STOP_EVENT)) {
+			System.out.println("Simulation stop time: " + this.simulator.getSimulatorAbsTime().si);
+			
 			System.out.println("Stop simulation.");
 			
 			saveFdValues();
@@ -637,7 +641,6 @@ public class VehicleAutomationModel extends AbstractOtsModel implements EventLis
 		GtuColorer colorer = new LmrsSwitchableColorer(DefaultsNl.GTU_TYPE_COLORS.toMap());
 		
 		// create generators for all lanes with corresponding objects
-		Time simTime = Time.instantiateSI(simConfig.getSimTime());
 		// left lane
 		makeGenerator(getLane(linkA, "FORWARD1"), speedA, "gen1", idGenerator, gtuTypeLaneA1, headwaysA1, colorer,
 				roomChecker, paramFactory, tacticalFactory, simTime, streams.get("gtuClass"));
@@ -752,7 +755,7 @@ public class VehicleAutomationModel extends AbstractOtsModel implements EventLis
 	{
 		// check whether a recording was already performed for this time interval
 		// skip this for first time, initially trajectoryLastTime will be < 0
-		double now = this.simulator.getSimulatorTime().si;
+		double now = this.simulator.getSimulatorAbsTime().si;
 		if (trajectoryLastTime > 0) {
 			// it is not the next time interval?
 			if (now < trajectoryLastTime + frequency) {
@@ -774,7 +777,7 @@ public class VehicleAutomationModel extends AbstractOtsModel implements EventLis
 				// track trajectory of GTUs in this lane
 				for (Gtu gtu : gtus) {
 					String gtuId = gtu.getId();
-					double time = gtu.getSimulator().getSimulatorTime().si;
+					double time = gtu.getSimulator().getSimulatorAbsTime().si;
 					double distance = gtu.getLocation().getX();
 					double speed = gtu.getSpeed().si;
 					
@@ -796,7 +799,7 @@ public class VehicleAutomationModel extends AbstractOtsModel implements EventLis
 	{
 		// main info
 		String gtuId = gtu.getId();
-    	double simTime = this.simulator.getSimulatorTime().si;
+    	double time = this.simulator.getSimulatorAbsTime().si;
     	
 		// get headway info
 		HeadwayInfo headwayInfo = null;
@@ -822,18 +825,18 @@ public class VehicleAutomationModel extends AbstractOtsModel implements EventLis
         	}
         	
         	// store sequence headway info for detailed data
-        	outputDataManager.addSequenceData(gtuId, simTime, "headwayTime", headwayTime);
-        	outputDataManager.addSequenceData(gtuId, simTime, "headwayDistance", headwayDistance);
-        	outputDataManager.addSequenceData(gtuId, simTime, "criticalTtc", headwayCriticalTtc);
+        	outputDataManager.addSequenceData(gtuId, time, "headwayTime", headwayTime);
+        	outputDataManager.addSequenceData(gtuId, time, "headwayDistance", headwayDistance);
+        	outputDataManager.addSequenceData(gtuId, time, "criticalTtc", headwayCriticalTtc);
         	double desiredHeadwayTime = gtu.getParameters().getParameterOrNull(ParameterTypes.T).si;
-        	outputDataManager.addSequenceData(gtuId, simTime, "desiredHeadwayTimeError", (headwayTime - desiredHeadwayTime));
+        	outputDataManager.addSequenceData(gtuId, time, "desiredHeadwayTimeError", (headwayTime - desiredHeadwayTime));
         }
         
         // store other detailed data
-        outputDataManager.addSequenceData(gtuId, simTime, "type", gtu.getType().toString());
-        outputDataManager.addSequenceData(gtuId, simTime, "acceleration", gtu.getAcceleration().toString());
-        outputDataManager.addSequenceData(gtuId, simTime, "speed", gtu.getSpeed().toString());
-        outputDataManager.addSequenceData(gtuId, simTime, "taskSaturation", gtu.getParameters().getParameterOrNull(Fuller.TS).toString());
+        outputDataManager.addSequenceData(gtuId, time, "type", gtu.getType().toString());
+        outputDataManager.addSequenceData(gtuId, time, "acceleration", gtu.getAcceleration().toString());
+        outputDataManager.addSequenceData(gtuId, time, "speed", gtu.getSpeed().toString());
+        outputDataManager.addSequenceData(gtuId, time, "taskSaturation", gtu.getParameters().getParameterOrNull(Fuller.TS).toString());
 	}
 	
 	/**
@@ -1030,7 +1033,7 @@ public class VehicleAutomationModel extends AbstractOtsModel implements EventLis
         Duration updateInterval = this.source.getUpdateInterval();
         double currentTime = this.simulator.getSimulatorTime().getSI();
         double nextCalculationTime = currentTime + updateInterval.getSI();
-        if (nextCalculationTime > this.simTime.getSI()) {
+        if (nextCalculationTime > simTime.getSI()) {
         	stopLaneRecording();
         }
         else {
@@ -1148,10 +1151,10 @@ public class VehicleAutomationModel extends AbstractOtsModel implements EventLis
         	}
         }
         
-        /** Function to add data to sequence map. Meant to store detailed data at simTime with gtuID*/
-        public void addSequenceData(String gtuId, double simTime, String variable, Object value) {
+        /** Function to add data to sequence map. Meant to store detailed data at simulation time with gtuID*/
+        public void addSequenceData(String gtuId, double time, String variable, Object value) {
             GtuSequenceData gtuData = sequenceOutputMap.getOrDefault(gtuId, new GtuSequenceData());
-            gtuData.addDataPoint(simTime, variable, value);
+            gtuData.addDataPoint(time, variable, value);
             sequenceOutputMap.put(gtuId, gtuData);
         }
         
@@ -1246,19 +1249,19 @@ public class VehicleAutomationModel extends AbstractOtsModel implements EventLis
         	trajectorySpeed.add(Double.toString(speed));
         }
         
-        /** classes to create a storage structure to save sequence data with gtuId and simTime */
+        /** classes to create a storage structure to save sequence data with gtuId and simulation time */
         public class GtuSequenceData {
-        	// Map with simTime as key and {variable, values} as value
+        	// Map with simulation time as key and {variable, values} as value
             private Map<Double, DataPoint> dataPoints;
 
             public GtuSequenceData() {
                 this.dataPoints = new LinkedHashMap<>();
             }
 
-            public void addDataPoint(double simulationTime, String variable, Object value) {
-                DataPoint dataPoint = dataPoints.getOrDefault(simulationTime, new DataPoint(simulationTime));
+            public void addDataPoint(double time, String variable, Object value) {
+                DataPoint dataPoint = dataPoints.getOrDefault(time, new DataPoint(time));
                 dataPoint.addValue(variable, value);
-                dataPoints.put(simulationTime, dataPoint);
+                dataPoints.put(time, dataPoint);
             }
 
             public Collection<DataPoint> getDataPoints() {
@@ -1267,16 +1270,16 @@ public class VehicleAutomationModel extends AbstractOtsModel implements EventLis
         }
         
         public class DataPoint {
-            private double simulationTime;
+            private double time;
             private Map<String, Object> values;
 
-            public DataPoint(double simulationTime) {
-                this.simulationTime = simulationTime;
+            public DataPoint(double time) {
+                this.time = time;
                 this.values = new LinkedHashMap<>();
             }
 
             public double getSimulationTime() {
-                return simulationTime;
+                return time;
             }
 
             public Map<String, Object> getValues() {

@@ -1,6 +1,7 @@
 from ema_workbench import (Model, MultiprocessingEvaluator, perform_experiments, Constant, RealParameter,
                            ScalarOutcome, SequentialEvaluator, Policy)
 from ema_workbench.em_framework.samplers import LHSSampler
+from datetime import datetime
 import pandas as pd
 import os
 from ots_models.ots_vehicle_automation_model import VehicleAutomationModel
@@ -32,14 +33,15 @@ if __name__ == '__main__':
 
     # experiment name and number
     experiment_string = 'policy_runs'
-    experiment_number = 4
+    experiment_number = 1
     experiment_name = f'{experiment_string}_{experiment_number}'
 
     # set seed
     seed = 0
 
     # show start of programme
-    print(f'Simulation of the {experiment_name} experiment has started:\n')
+    print(f'{datetime.now().time().strftime("%H:%M:%S")}: '
+          f'Simulation of the {experiment_name} experiment has started:\n')
 
     # create runnable OpenTrafficSim model
     ots_model = VehicleAutomationModel(experiment_name=experiment_name, seed=seed, user_feedback=True)
