@@ -36,10 +36,10 @@ public class RunVehicleAutomationModel implements Runnable
     @Option(names = "-leftFraction", description = "Left traffic fraction.", defaultValue = "0.8")
     private double leftFraction;
     
-    @Option(names = "-mainDemand", description = "Left traffic fraction.", defaultValue = "2000") // 2000
+    @Option(names = "-mainDemand", description = "Left traffic fraction.", defaultValue = "6000") // 2000
     private double mainDemand;
     
-    @Option(names = "-rampDemand", description = "Left traffic fraction.", defaultValue = "500") // 500
+    @Option(names = "-rampDemand", description = "Left traffic fraction.", defaultValue = "2000") // 500
     private double rampDemand;
     
     @Option(names = "-additionalIncentives", description = "Enable additional lane change and speed incentives.", negatable=false, defaultValue = "true")

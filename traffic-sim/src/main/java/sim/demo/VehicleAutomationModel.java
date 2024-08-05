@@ -59,6 +59,7 @@ import org.opentrafficsim.draw.graphs.FundamentalDiagram;
 import org.opentrafficsim.draw.graphs.GraphCrossSection;
 import org.opentrafficsim.draw.graphs.GraphPath;
 import org.opentrafficsim.draw.graphs.GraphPath.Section;
+import org.opentrafficsim.kpi.interfaces.LaneData;
 import org.opentrafficsim.draw.graphs.FundamentalDiagram.FdSource;
 import org.opentrafficsim.road.gtu.generator.GeneratorPositions;
 import org.opentrafficsim.road.gtu.generator.LaneBasedGtuGenerator;
@@ -865,16 +866,25 @@ public class VehicleAutomationModel extends AbstractOtsModel implements EventLis
 	        	}
 	            double distance = headway.getDistance().si;
 	            double speed = laneBasedGtu.getSpeed().si;
+	            
+	            // check NaN values, return no collision info
+	            if (Double.isNaN(distance) || Double.isNaN(speed)) {
+	            	return new HeadwayInfo(Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY, false);
+	            }
+	            
+	            // calculate headway time (time-to-collision)
 	            double ttc = distance / speed;
-
+	            
+	            // check speed value
 	            if (speed > 0) {
 	            	// return headway distance and time-to-collision
 	            	boolean criticalTtc = ttc > responseTime;
                     return new HeadwayInfo(distance, ttc, criticalTtc);
                 }
-	            
-	            // return only headway distance
-	            return new HeadwayInfo(distance, Double.POSITIVE_INFINITY, false);
+	            else {
+		            // return only headway distance
+		            return new HeadwayInfo(distance, Double.POSITIVE_INFINITY, false);
+	            }
 	        }
 	    }
 	    
@@ -943,7 +953,6 @@ public class VehicleAutomationModel extends AbstractOtsModel implements EventLis
      * Method to calculate Fundamental Diagram values for specific lanes.
      * @param updateInterval Duration;
      */
-    @SuppressWarnings("unused")
     private void createLaneSpecifiFdValues(Duration updateInterval)
     {	
     	// create two data lanes
@@ -1031,6 +1040,14 @@ public class VehicleAutomationModel extends AbstractOtsModel implements EventLis
     	
     	// recalculate values
         this.source.recalculate(this.simulator.getSimulatorAbsTime());
+        
+        if (this.source.getItemCount(0) > 1) {
+        	for (LaneData<?> lane : this.sampler.getSamplerData().getLanes()) {
+
+            	System.out.println(this.sampler.getSamplerData().getTrajectoryGroup(lane));
+        	}
+        	System.out.println("source meanSpeed: " + this.source.getSpeed(0, this.source.getItemCount(0) - 1));
+        }
         
         // only schedule new calculation when it happens within simulation time
         // stop sampler lane data recording is necessary to make the last calculation reproducible for network recording
@@ -1218,10 +1235,19 @@ public class VehicleAutomationModel extends AbstractOtsModel implements EventLis
         	
         	// loop through stored variables
         	for (String varName : this.meanMap.keySet()) {
-        		// calculate mean value
-        		double mean = calculateMeanOfList((ArrayList<Double>) meanMap.get(varName));
-        		// save as constant output parameter
-        		this.setSingleValue(varName, mean);
+        		// get values
+        		ArrayList<Double> varValues = meanMap.get(varName);
+        		// calculate mean value if values are available
+        		if (varValues.size() > 0) {
+        			double mean = calculateMeanOfList(varValues);
+        			// save as constant output parameter
+            		this.setSingleValue(varName, mean);
+        		}
+        		else {
+        			String mean = "No values";
+        			// save as constant output parameter
+            		this.setSingleValue(varName, mean);
+        		}
         	}
         	
         }
@@ -1234,6 +1260,10 @@ public class VehicleAutomationModel extends AbstractOtsModel implements EventLis
         	// get sum of values
         	double sum = 0.0;
         	for (double value : valueList) {
+        		// do not take NaN values into account, this will result in a NaN sum
+        		if (Double.isNaN(value)) {
+                	continue;
+        		}
         		sum += value;
         	}
         	
