@@ -12,7 +12,7 @@ public class RunVehicleAutomationModel implements Runnable
 	/**
 	 *  Create picocli @Option input variables
 	 */
-	@Option(names = "-headless", description = "Run without animations.", negatable=true, defaultValue = "false")
+	@Option(names = "-headless", description = "Run without animations.", negatable=true, defaultValue = "true")
     private boolean headless;
 	
 	@Option(names = "-seed", description = "Set simulation seed.", defaultValue = "0")

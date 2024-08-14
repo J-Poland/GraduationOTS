@@ -16,6 +16,7 @@ import org.djunits.unit.FrequencyUnit;
 import org.djunits.unit.LengthUnit;
 import org.djunits.unit.SpeedUnit;
 import org.djunits.unit.TimeUnit;
+import org.djunits.value.vdouble.scalar.Acceleration;
 import org.djunits.value.vdouble.scalar.Duration;
 import org.djunits.value.vdouble.scalar.Frequency;
 import org.djunits.value.vdouble.scalar.Length;
@@ -107,6 +108,8 @@ import nl.tudelft.simulation.jstats.distributions.DistUniform;
 import nl.tudelft.simulation.jstats.streams.MersenneTwister;
 import nl.tudelft.simulation.jstats.streams.StreamInterface;
 import sim.demo.behavior.TrafficInteractionAdaptations.CarFollowingBehavior;
+import sim.demo.gtu.CustomLaneBasedGtuTemplate;
+import sim.demo.gtu.CustomLaneBasedGtuTemplateDistribution;
 import sim.demo.lmrs.CustomCooperation;
 import sim.demo.mental.CarFollowingTask;
 import sim.demo.mental.CustomAdaptationHeadway;
@@ -165,8 +168,8 @@ public class VehicleAutomationModel extends AbstractOtsModel implements EventLis
 	private RoadNetwork network;
 
 	/** Network. */
-	// Rijkswaterstaat ROA Chapter 6 contains standards on turbulence regions
-	// also the merge lane lengths are defined
+	// Rijkswaterstaat ROA Chapter 6 contains standards on turbulence regions (figure 6.6)
+	// also the merge lane lengths are defined (table 6.9)
 	static final String networkString = "twoLaneFreewayWithOnRamp2";
 	
 	/** Speed limit and speed variation. */
@@ -174,15 +177,15 @@ public class VehicleAutomationModel extends AbstractOtsModel implements EventLis
 	static final double speedMin = 120.0;
 	static final double speedMax = 140.0;
 	
-	/** HDV length and width. */
-	static final double hdvLength = 4.0;
-	static final double hdvWidth = 2.0;
+	/** Vehicle length and width. */
+	static final double vehicleLength = 4.0;
+	static final double vehicleWidth = 2.0;
 	
-	/** AV length and width. */
-	static final double avLength = 4.0;
-	static final double avWidth = 2.0;
+	/** Vehicle max acceleration and max deceleration. */
+	static final double maxAcceleration = 3.0;
+	static final double maxDeceleration = -8.0;
 	
-	/** Synchronization. */
+	/** Synchronisation. */
 	static final Synchronization synchronizationMethod = Synchronization.ALIGN_GAP;
 
 	/** Cooperation. */
@@ -398,6 +401,7 @@ public class VehicleAutomationModel extends AbstractOtsModel implements EventLis
 			// add GTU listeners
 			gtu.addListener(this, Gtu.MOVE_EVENT);
 			gtu.addListener(this, LaneBasedGtu.LANE_CHANGE_EVENT);
+			gtu.addListener(this, LaneBasedGtu.LANEBASED_MOVE_EVENT);
 			
 			// add GTU to gtuAddTimesMap to track GTU travel time
 			gtuAddTimesMap.put(gtuId, this.simulator.getSimulatorAbsTime().getSI());
@@ -422,6 +426,9 @@ public class VehicleAutomationModel extends AbstractOtsModel implements EventLis
 			String gtuId = (String) ((Object[]) event.getContent())[0];
 	        LaneBasedGtu gtu = (LaneBasedGtu) this.network.getGTU(gtuId);
 	        
+
+			System.out.println(gtuId + ": Move event at " + this.simulator.getSimulatorAbsTime().si);
+	        
 	        // track GTU data
 	        TrackGtuData(gtu);
 	        
@@ -438,6 +445,32 @@ public class VehicleAutomationModel extends AbstractOtsModel implements EventLis
 //			} catch (ParameterException e) {
 //				e.printStackTrace();
 //			}
+	        
+	        // check collision
+			try {
+				double acceleration = gtu.getOperationalPlan().getAcceleration(this.simulator.getSimulatorAbsTime()).si;
+				double speed = gtu.getOperationalPlan().getSpeed(this.simulator.getSimulatorAbsTime()).si;
+				// detect collision if acceleration is high at high speeds (10 km/h -> 2.78 m/s)
+				if (acceleration < maxDeceleration && speed > 2.78) {
+					// explain collision and stop simulation
+					System.out.println(gtuId + " involved in a collision at simulation time: " + this.simulator.getSimulatorAbsTime().si);
+					System.out.println(gtuId + " collision detected at acceleration: " + acceleration + " and speed: " + speed);
+					this.simulator.stop();
+				}
+				else if (acceleration < maxDeceleration && speed < 2.78) {
+					// explain abrupt braking because of very low speeds
+					System.out.println(gtuId + " abrupt braking at low speed (acceleration: " + acceleration + " and speed: " + speed + ")");
+				}
+			} catch (OperationalPlanException e) {
+				System.out.println("No operational plan for: " + gtuId);
+				e.printStackTrace();
+			}
+		}
+		
+		if (event.getType().equals(LaneBasedGtu.LANEBASED_MOVE_EVENT)) {
+
+			String gtuId = (String) ((Object[]) event.getContent())[0];
+			System.out.println(gtuId + ": Lanebased move event at " + this.simulator.getSimulatorAbsTime().si);
 		}
 		
 		// process change event
@@ -604,38 +637,44 @@ public class VehicleAutomationModel extends AbstractOtsModel implements EventLis
 				tacticalFactory, paramFactory);
 		
 		// create vehicle templates, with routes from main road and ramp
-		ArrayList<LaneBasedGtuTemplate> gtuMainTemplates = new ArrayList<LaneBasedGtuTemplate>();
-		ArrayList<LaneBasedGtuTemplate> gtuRampTemplates = new ArrayList<LaneBasedGtuTemplate>();
+		ArrayList<CustomLaneBasedGtuTemplate> gtuMainTemplates = new ArrayList<CustomLaneBasedGtuTemplate>();
+		ArrayList<CustomLaneBasedGtuTemplate> gtuRampTemplates = new ArrayList<CustomLaneBasedGtuTemplate>();
 		for (GtuType gtuType : availableGtuTypes) {
 			// main road
-			LaneBasedGtuTemplate templateA = 
-					new LaneBasedGtuTemplate(gtuType, 
-					new ConstantGenerator<>(Length.instantiateSI(hdvLength)),
-					new ConstantGenerator<>(Length.instantiateSI(hdvWidth)), 
-					gtuSpeed, strategicalFactory, routeGeneratorA);
+			CustomLaneBasedGtuTemplate templateA = 
+					new CustomLaneBasedGtuTemplate(gtuType, 
+					new ConstantGenerator<>(Length.instantiateSI(vehicleLength)),
+					new ConstantGenerator<>(Length.instantiateSI(vehicleWidth)),
+					gtuSpeed,
+					new ConstantGenerator<>(Acceleration.instantiateSI(maxAcceleration)), 
+					new ConstantGenerator<>(Acceleration.instantiateSI(maxDeceleration)),
+					strategicalFactory, routeGeneratorA);
 			gtuMainTemplates.add(templateA);
 			// ramp
-			LaneBasedGtuTemplate templateE = 
-					new LaneBasedGtuTemplate(gtuType, 
-					new ConstantGenerator<>(Length.instantiateSI(hdvLength)),
-					new ConstantGenerator<>(Length.instantiateSI(hdvWidth)), 
-					gtuSpeed, strategicalFactory, routeGeneratorE);
+			CustomLaneBasedGtuTemplate templateE = 
+					new CustomLaneBasedGtuTemplate(gtuType, 
+					new ConstantGenerator<>(Length.instantiateSI(vehicleLength)),
+					new ConstantGenerator<>(Length.instantiateSI(vehicleWidth)),
+					gtuSpeed, 
+					new ConstantGenerator<>(Acceleration.instantiateSI(maxAcceleration)), 
+					new ConstantGenerator<>(Acceleration.instantiateSI(maxDeceleration)),
+					strategicalFactory, routeGeneratorE);
 			gtuRampTemplates.add(templateE);
 		}
 		
 		// set vehicle distributions for
 		// left lane
-		Distribution<LaneBasedGtuTemplate> gtuTypeLaneA1 = new Distribution<>(streams.get("gtuClass"));
+		Distribution<CustomLaneBasedGtuTemplate> gtuTypeLaneA1 = new Distribution<>(streams.get("gtuClass"));
 		for (int i = 0; i < gtuMainTemplates.size(); i++) {
 			gtuTypeLaneA1.add(new FrequencyAndObject<>(gtuFractions.get(i), gtuMainTemplates.get(i)));
 		}
 		// right lane
-		Distribution<LaneBasedGtuTemplate> gtuTypeLaneA2 = new Distribution<>(streams.get("gtuClass"));
+		Distribution<CustomLaneBasedGtuTemplate> gtuTypeLaneA2 = new Distribution<>(streams.get("gtuClass"));
 		for (int i = 0; i < gtuMainTemplates.size(); i++) {
 			gtuTypeLaneA2.add(new FrequencyAndObject<>(gtuFractions.get(i), gtuMainTemplates.get(i)));
 		}
 		// ramp lane
-		Distribution<LaneBasedGtuTemplate> gtuTypeLaneE = new Distribution<>(streams.get("gtuClass"));
+		Distribution<CustomLaneBasedGtuTemplate> gtuTypeLaneE = new Distribution<>(streams.get("gtuClass"));
 		for (int i = 0; i < gtuMainTemplates.size(); i++) {
 			gtuTypeLaneE.add(new FrequencyAndObject<>(gtuFractions.get(i), gtuRampTemplates.get(i)));
 		}
@@ -697,7 +736,7 @@ public class VehicleAutomationModel extends AbstractOtsModel implements EventLis
 	 * @throws NetworkException     if the object could not be added to the network
 	 */
 	private void makeGenerator(final Lane lane, final Speed generationSpeed, final String id,
-			final IdGenerator idGenerator, final Distribution<LaneBasedGtuTemplate> distribution,
+			final IdGenerator idGenerator, final Distribution<CustomLaneBasedGtuTemplate> distribution,
 			final Generator<Duration> headwayGenerator, final GtuColorer gtuColorer, final RoomChecker roomChecker,
 			final ParameterFactory bcFactory, final LaneBasedTacticalPlannerFactory<?> tacticalFactory,
 			final Time simulationTime, final StreamInterface stream)
@@ -706,7 +745,8 @@ public class VehicleAutomationModel extends AbstractOtsModel implements EventLis
 		Set<LanePosition> initialLongitudinalPositions = new LinkedHashSet<>();
 		// TODO DIR_MINUS
 		initialLongitudinalPositions.add(new LanePosition(lane, new Length(5.0, LengthUnit.SI)));
-		LaneBasedGtuTemplateDistribution characteristicsGenerator = new LaneBasedGtuTemplateDistribution(distribution);
+		// TODO (Jesse): My own characteristics
+		CustomLaneBasedGtuTemplateDistribution characteristicsGenerator = new CustomLaneBasedGtuTemplateDistribution(distribution);
 		new LaneBasedGtuGenerator(id, headwayGenerator, characteristicsGenerator,
 				GeneratorPositions.create(initialLongitudinalPositions, stream), this.network, getSimulator(),
 				roomChecker, idGenerator);
@@ -866,14 +906,19 @@ public class VehicleAutomationModel extends AbstractOtsModel implements EventLis
 	        	}
 	            double distance = headway.getDistance().si;
 	            double speed = laneBasedGtu.getSpeed().si;
+	            double leaderSpeed = headway.getSpeed().si;
 	            
 	            // check NaN values, return no collision info
-	            if (Double.isNaN(distance) || Double.isNaN(speed)) {
+	            if (Double.isNaN(distance) || Double.isNaN(speed) || Double.isNaN(leaderSpeed)) {
 	            	return new HeadwayInfo(Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY, false);
 	            }
 	            
 	            // calculate headway time (time-to-collision)
 	            double ttc = distance / speed;
+	            double relativeTtc = Double.NaN;
+	            if (speed > leaderSpeed) {
+	            	relativeTtc = distance / (speed - leaderSpeed);
+	            }
 	            
 	            // check speed value
 	            if (speed > 0) {
@@ -1044,9 +1089,9 @@ public class VehicleAutomationModel extends AbstractOtsModel implements EventLis
         if (this.source.getItemCount(0) > 1) {
         	for (LaneData<?> lane : this.sampler.getSamplerData().getLanes()) {
 
-            	System.out.println(this.sampler.getSamplerData().getTrajectoryGroup(lane));
+//            	System.out.println(this.sampler.getSamplerData().getTrajectoryGroup(lane));
         	}
-        	System.out.println("source meanSpeed: " + this.source.getSpeed(0, this.source.getItemCount(0) - 1));
+//        	System.out.println("source meanSpeed: " + this.source.getSpeed(0, this.source.getItemCount(0) - 1));
         }
         
         // only schedule new calculation when it happens within simulation time
@@ -1088,7 +1133,7 @@ public class VehicleAutomationModel extends AbstractOtsModel implements EventLis
         	latestIndex -= 1;
         }
         
-        System.out.println("Source: " + this.source.getItemCount(0));
+//        System.out.println("Source: " + this.source.getItemCount(0));
         
         // process all calculated values
         for (int i = 0; i < latestIndex; i++) {

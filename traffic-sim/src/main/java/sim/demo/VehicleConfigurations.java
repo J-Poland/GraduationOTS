@@ -6,7 +6,9 @@ import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.function.BiFunction;
 
+import org.djunits.unit.AccelerationUnit;
 import org.djunits.unit.SpeedUnit;
+import org.djunits.value.vdouble.scalar.Acceleration;
 import org.djunits.value.vdouble.scalar.Duration;
 import org.djunits.value.vdouble.scalar.Length;
 import org.djunits.value.vdouble.scalar.Speed;
@@ -14,6 +16,7 @@ import org.djutils.immutablecollections.Immutable;
 import org.djutils.immutablecollections.ImmutableLinkedHashMap;
 import org.djutils.immutablecollections.ImmutableMap;
 import org.opentrafficsim.base.parameters.ParameterException;
+import org.opentrafficsim.base.parameters.ParameterTypeAcceleration;
 import org.opentrafficsim.base.parameters.ParameterTypeDouble;
 import org.opentrafficsim.base.parameters.ParameterTypes;
 import org.opentrafficsim.core.definitions.Defaults;
@@ -107,11 +110,11 @@ public class VehicleConfigurations extends Defaults implements BiFunction<GtuTyp
     	map.put(LEVEL2_CAR, Color.ORANGE);
     	map.put(LEVEL3_CAR, Color.RED);
     	// existing GTU types
-        map.put(CAR, Color.BLACK);
-        map.put(TRUCK, Color.BLACK);
-        map.put(VEHICLE, Color.GRAY);
-        map.put(PEDESTRIAN, Color.BLUE);
-        map.put(BICYCLE, Color.GREEN);
+//        map.put(CAR, Color.BLACK);
+//        map.put(TRUCK, Color.BLACK);
+//        map.put(VEHICLE, Color.GRAY);
+//        map.put(PEDESTRIAN, Color.BLUE);
+//        map.put(BICYCLE, Color.GREEN);
         GTU_TYPE_COLORS = new ImmutableLinkedHashMap<>(map, Immutable.WRAP);
     }
 
@@ -151,9 +154,9 @@ public class VehicleConfigurations extends Defaults implements BiFunction<GtuTyp
 		// reaction time
 		Duration[] trValues = {
 				Duration.instantiateSI(0.8),
-				Duration.instantiateSI(0.8),
-				Duration.instantiateSI(0.8),
-				Duration.instantiateSI(0.6)};
+				Duration.instantiateSI(0.4),
+				Duration.instantiateSI(0.4),
+				Duration.instantiateSI(0.4)};
 		
 		// lookahead and lookback
 		Length[] lookAheadValues = {
@@ -186,7 +189,7 @@ public class VehicleConfigurations extends Defaults implements BiFunction<GtuTyp
 		double saMinValue = 0.1;
 		DistTriangular saValue = new DistTriangular(stream, 0.0, 0.2, 0.8);
 		double saMaxValue = 1.0;
-		Duration trBestValue = Duration.instantiateSI(1.5);
+		Duration trBestValue = Duration.instantiateSI(0.8);
 		double betaTValue = 1.0;
 		double betaV0Value = 1.0;
 		
@@ -208,8 +211,9 @@ public class VehicleConfigurations extends Defaults implements BiFunction<GtuTyp
 			paramFactory.addParameter(currentType, ParameterTypes.TMAX, tMaxValues[i]);
 			paramFactory.addParameter(currentType, ParameterTypes.TMIN, tMinValues[i]);
 			paramFactory.addParameter(currentType, INITIAL_T, trValues[i].si);
-			// reaction time
+			// reaction time (and simulation steps)
 			paramFactory.addParameter(currentType, ParameterTypes.TR, trValues[i]);
+			paramFactory.addParameter(currentType, ParameterTypes.DT, Duration.instantiateSI(0.5));
 			// lookahead and lookback
 			paramFactory.addParameter(currentType, ParameterTypes.LOOKAHEAD, lookAheadValues[i]);
 			paramFactory.addParameter(currentType, ParameterTypes.LOOKBACK, lookBackValues[i]);
