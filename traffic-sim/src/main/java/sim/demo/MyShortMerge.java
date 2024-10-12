@@ -63,10 +63,12 @@ import org.opentrafficsim.road.gtu.generator.GeneratorPositions;
 import org.opentrafficsim.road.gtu.generator.LaneBasedGtuGenerator;
 import org.opentrafficsim.road.gtu.generator.LaneBasedGtuGenerator.RoomChecker;
 import org.opentrafficsim.road.gtu.generator.TtcRoomChecker;
+import org.opentrafficsim.road.gtu.generator.characteristics.LaneBasedGtuTemplate;
 import org.opentrafficsim.road.gtu.generator.characteristics.LaneBasedGtuTemplateDistribution;
 import org.opentrafficsim.road.gtu.lane.LaneBasedGtu;
 import org.opentrafficsim.road.gtu.lane.perception.CategoricalLanePerception;
 import org.opentrafficsim.road.gtu.lane.perception.LanePerception;
+import org.opentrafficsim.road.gtu.lane.perception.PerceptionCollectable;
 import org.opentrafficsim.road.gtu.lane.perception.PerceptionFactory;
 import org.opentrafficsim.road.gtu.lane.perception.RelativeLane;
 import org.opentrafficsim.road.gtu.lane.perception.categories.AnticipationTrafficPerception;
@@ -78,6 +80,9 @@ import org.opentrafficsim.road.gtu.lane.perception.categories.neighbors.Estimati
 import org.opentrafficsim.road.gtu.lane.perception.categories.neighbors.HeadwayGtuType;
 import org.opentrafficsim.road.gtu.lane.perception.categories.neighbors.HeadwayGtuType.PerceivedHeadwayGtuType;
 import org.opentrafficsim.road.gtu.lane.perception.categories.neighbors.NeighborsPerception;
+import org.opentrafficsim.road.gtu.lane.perception.headway.HeadwayGtu;
+import org.opentrafficsim.road.gtu.lane.perception.mental.AdaptationHeadway;
+import org.opentrafficsim.road.gtu.lane.perception.mental.AdaptationSituationalAwareness;
 import org.opentrafficsim.road.gtu.lane.perception.mental.AdaptationSpeed;
 import org.opentrafficsim.road.gtu.lane.perception.mental.Fuller;
 import org.opentrafficsim.road.gtu.lane.perception.mental.Task;
@@ -157,10 +162,10 @@ public class MyShortMerge extends OtsSimulationApplication<sim.demo.MyShortMerge
     static final double LEFT_FRACTION = 0.3;
 
     /** Main demand per lane. */
-    static final Frequency MAIN_DEMAND = new Frequency(1000, FrequencyUnit.PER_HOUR);
+    static final Frequency MAIN_DEMAND = new Frequency(6000, FrequencyUnit.PER_HOUR);
 
     /** Ramp demand. */
-    static final Frequency RAMP_DEMAND = new Frequency(500, FrequencyUnit.PER_HOUR);
+    static final Frequency RAMP_DEMAND = new Frequency(2000, FrequencyUnit.PER_HOUR);
 
     /** Synchronization. */
     static final Synchronization SYNCHRONIZATION = Synchronization.ALIGN_GAP;
@@ -353,24 +358,7 @@ public class MyShortMerge extends OtsSimulationApplication<sim.demo.MyShortMerge
     		if (event.getType().equals(Gtu.MOVE_EVENT)) {
     			String gtuId = (String) ((Object[]) event.getContent())[0];
     	        LaneBasedGtu gtu = (LaneBasedGtu) this.network.getGTU(gtuId);
-    	        
-    	        NeighborsPerception thisVar;
-				try {
-
-//					thisVar = gtu.getTacticalPlanner().getPerception().getPerceptionCategory(NeighborsPerception.class);
-//					if (!thisVar.getLeaders(RelativeLane.CURRENT).isEmpty()) {
-//						System.out.println(thisVar.getLeaders(RelativeLane.CURRENT).first().getClass().toString());
-//					}
-					if (gtu.getId().equals("238")) {
-						thisVar = gtu.getTacticalPlanner().getPerception().getPerceptionCategory(NeighborsPerception.class);
-						System.out.println("TacticalPlanner leaders is empty: " + thisVar.getLeaders(RelativeLane.CURRENT).isEmpty());
-						System.out.println("TacticalPlanner distance: " + thisVar.getLeaders(RelativeLane.CURRENT).first().getDistance());
-					}
-				} catch (OperationalPlanException | NullPointerException | IllegalArgumentException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-    		}
+    	    }
     		
     		if (event.getType().equals(LaneBasedGtu.LANEBASED_MOVE_EVENT)) {
 
@@ -429,15 +417,16 @@ public class MyShortMerge extends OtsSimulationApplication<sim.demo.MyShortMerge
                     Set<BehavioralAdaptation> behavioralAdapatations = new LinkedHashSet<>();
                     // these adaptations must be present! next to adjusting parameters based on task load,
                     // they are responsible to set the parameters required for Fuller perception
-                    behavioralAdapatations.add(new CustomAdaptationSituationalAwareness());
-                    behavioralAdapatations.add(new CustomAdaptationHeadway());
+                    behavioralAdapatations.add(new AdaptationSituationalAwareness());
+                    behavioralAdapatations.add(new AdaptationHeadway());
                     behavioralAdapatations.add(new AdaptationSpeed());
                     
                     TaskManager taskManager = new TaskManagerAr("car-following");
                     CategoricalLanePerception perception =
                             new CategoricalLanePerception(gtu, new Fuller(tasks, behavioralAdapatations, taskManager));
                     
-                    Estimation estimation = Estimation.NONE;
+                    Estimation estimation = Estimation.FACTOR_ESTIMATION;
+//                    Estimation estimation = Estimation.NONE;
                     Anticipation anticipation = Anticipation.CONSTANT_ACCELERATION;
                     
                     HeadwayGtuType headwayGtuType = new PerceivedHeadwayGtuType(estimation, anticipation);
@@ -507,12 +496,13 @@ public class MyShortMerge extends OtsSimulationApplication<sim.demo.MyShortMerge
  			bcFactory.addParameter(Fuller.TC, Fuller.TC.getDefaultValue());
  			bcFactory.addParameter(Fuller.TS_CRIT, Fuller.TS_CRIT.getDefaultValue());
  			bcFactory.addParameter(Fuller.TS_MAX, Fuller.TS_MAX.getDefaultValue());
- 			bcFactory.addParameter(CustomAdaptationSituationalAwareness.SA_MIN, CustomAdaptationSituationalAwareness.SA_MIN.getDefaultValue());
- 			bcFactory.addParameter(CustomAdaptationSituationalAwareness.SA, CustomAdaptationSituationalAwareness.SA.getDefaultValue());
- 			bcFactory.addParameter(CustomAdaptationSituationalAwareness.SA_MAX, CustomAdaptationSituationalAwareness.SA_MAX.getDefaultValue());
- 			bcFactory.addParameter(CustomAdaptationSituationalAwareness.TR_MAX, CustomAdaptationSituationalAwareness.TR_MAX.getDefaultValue());
- 			bcFactory.addParameter(CustomAdaptationHeadway.BETA_T, CustomAdaptationHeadway.BETA_T.getDefaultValue());
+ 			bcFactory.addParameter(AdaptationSituationalAwareness.SA_MIN, AdaptationSituationalAwareness.SA_MIN.getDefaultValue());
+ 			bcFactory.addParameter(AdaptationSituationalAwareness.SA, AdaptationSituationalAwareness.SA.getDefaultValue());
+ 			bcFactory.addParameter(AdaptationSituationalAwareness.SA_MAX, AdaptationSituationalAwareness.SA_MAX.getDefaultValue());
+ 			bcFactory.addParameter(AdaptationSituationalAwareness.TR_MAX, AdaptationSituationalAwareness.TR_MAX.getDefaultValue());
+ 			bcFactory.addParameter(AdaptationHeadway.BETA_T, AdaptationHeadway.BETA_T.getDefaultValue());
  			bcFactory.addParameter(AdaptationSpeed.BETA_V0, AdaptationSpeed.BETA_V0.getDefaultValue());
+ 			bcFactory.addParameter(Estimation.OVER_EST, 1.0);
 			// tasks
 			bcFactory.addParameter(TaskManagerAr.ALPHA, TaskManagerAr.ALPHA.getDefaultValue());
 			bcFactory.addParameter(TaskManagerAr.BETA, TaskManagerAr.BETA.getDefaultValue());
@@ -532,43 +522,35 @@ public class MyShortMerge extends OtsSimulationApplication<sim.demo.MyShortMerge
             LaneBasedStrategicalRoutePlannerFactory strategicalFactory =
                     new LaneBasedStrategicalRoutePlannerFactory(tacticalFactory, bcFactory);
             // vehicle templates, with routes
-            CustomLaneBasedGtuTemplate carA =
-                    new CustomLaneBasedGtuTemplate(car, new ConstantGenerator<>(Length.instantiateSI(4.0)),
+            LaneBasedGtuTemplate carA =
+                    new LaneBasedGtuTemplate(car, new ConstantGenerator<>(Length.instantiateSI(4.0)),
                             new ConstantGenerator<>(Length.instantiateSI(2.0)), speedCar,
-                            new ConstantGenerator<>(Acceleration.instantiateSI(maxAcceleration)), 
-        					new ConstantGenerator<>(Acceleration.instantiateSI(maxDeceleration)),
                             strategicalFactory, routeGeneratorA);
-            CustomLaneBasedGtuTemplate carF =
-                    new CustomLaneBasedGtuTemplate(car, new ConstantGenerator<>(Length.instantiateSI(4.0)),
-                            new ConstantGenerator<>(Length.instantiateSI(2.0)), speedCar, 
-                            new ConstantGenerator<>(Acceleration.instantiateSI(maxAcceleration)), 
-        					new ConstantGenerator<>(Acceleration.instantiateSI(maxDeceleration)),
+            LaneBasedGtuTemplate carF =
+                    new LaneBasedGtuTemplate(car, new ConstantGenerator<>(Length.instantiateSI(4.0)),
+                            new ConstantGenerator<>(Length.instantiateSI(2.0)), speedCar,
         					strategicalFactory, routeGeneratorF);
-            CustomLaneBasedGtuTemplate truckA = new CustomLaneBasedGtuTemplate(truck,
+            LaneBasedGtuTemplate truckA = new LaneBasedGtuTemplate(truck,
                     new ConstantGenerator<>(Length.instantiateSI(15.0)), new ConstantGenerator<>(Length.instantiateSI(2.5)),
-                    speedTruck, 
-                    new ConstantGenerator<>(Acceleration.instantiateSI(maxAcceleration)), 
-					new ConstantGenerator<>(Acceleration.instantiateSI(maxDeceleration)),
+                    speedTruck,
 					strategicalFactory, routeGeneratorA);
-            CustomLaneBasedGtuTemplate truckF = new CustomLaneBasedGtuTemplate(truck,
+            LaneBasedGtuTemplate truckF = new LaneBasedGtuTemplate(truck,
                     new ConstantGenerator<>(Length.instantiateSI(15.0)), new ConstantGenerator<>(Length.instantiateSI(2.5)),
                     speedTruck, 
-                    new ConstantGenerator<>(Acceleration.instantiateSI(maxAcceleration)), 
-					new ConstantGenerator<>(Acceleration.instantiateSI(maxDeceleration)),
 					strategicalFactory, routeGeneratorF);
             //
-            Distribution<CustomLaneBasedGtuTemplate> gtuTypeAllCarA = new Distribution<>(streams.get("gtuClass"));
+            Distribution<LaneBasedGtuTemplate> gtuTypeAllCarA = new Distribution<>(streams.get("gtuClass"));
             gtuTypeAllCarA.add(new FrequencyAndObject<>(1.0, carA));
 
-            Distribution<CustomLaneBasedGtuTemplate> gtuType1LaneF = new Distribution<>(streams.get("gtuClass"));
+            Distribution<LaneBasedGtuTemplate> gtuType1LaneF = new Distribution<>(streams.get("gtuClass"));
             gtuType1LaneF.add(new FrequencyAndObject<>(1.0 - 2 * TRUCK_FRACTION, carF));
             gtuType1LaneF.add(new FrequencyAndObject<>(2 * TRUCK_FRACTION, truckF));
 
-            Distribution<CustomLaneBasedGtuTemplate> gtuType2ndLaneA = new Distribution<>(streams.get("gtuClass"));
+            Distribution<LaneBasedGtuTemplate> gtuType2ndLaneA = new Distribution<>(streams.get("gtuClass"));
             gtuType2ndLaneA.add(new FrequencyAndObject<>(1.0 - 2 * TRUCK_FRACTION, carA));
             gtuType2ndLaneA.add(new FrequencyAndObject<>(2 * TRUCK_FRACTION, truckA));
 
-            Distribution<CustomLaneBasedGtuTemplate> gtuType3rdLaneA = new Distribution<>(streams.get("gtuClass"));
+            Distribution<LaneBasedGtuTemplate> gtuType3rdLaneA = new Distribution<>(streams.get("gtuClass"));
             gtuType3rdLaneA.add(new FrequencyAndObject<>(1.0 - 3 * TRUCK_FRACTION, carA));
             gtuType3rdLaneA.add(new FrequencyAndObject<>(3 * TRUCK_FRACTION, truckA));
 
@@ -627,7 +609,7 @@ public class MyShortMerge extends OtsSimulationApplication<sim.demo.MyShortMerge
          * @throws NetworkException if the object could not be added to the network
          */
         private void makeGenerator(final Lane lane, final Speed generationSpeed, final String id, final IdGenerator idGenerator,
-                final Distribution<CustomLaneBasedGtuTemplate> distribution, final Generator<Duration> headwayGenerator,
+                final Distribution<LaneBasedGtuTemplate> distribution, final Generator<Duration> headwayGenerator,
                 final GtuColorer gtuColorer, final RoomChecker roomChecker, final ParameterFactory bcFactory,
                 final LaneBasedTacticalPlannerFactory<?> tacticalFactory, final Time simulationTime,
                 final StreamInterface stream) throws SimRuntimeException, ProbabilityException, GtuException, ParameterException, NetworkException
@@ -636,8 +618,8 @@ public class MyShortMerge extends OtsSimulationApplication<sim.demo.MyShortMerge
             Set<LanePosition> initialLongitudinalPositions = new LinkedHashSet<>();
             // TODO DIR_MINUS
             initialLongitudinalPositions.add(new LanePosition(lane, new Length(5.0, LengthUnit.SI)));
-            CustomLaneBasedGtuTemplateDistribution characteristicsGenerator =
-                    new CustomLaneBasedGtuTemplateDistribution(distribution);
+            LaneBasedGtuTemplateDistribution characteristicsGenerator =
+                    new LaneBasedGtuTemplateDistribution(distribution);
             new LaneBasedGtuGenerator(id, headwayGenerator, characteristicsGenerator,
                     GeneratorPositions.create(initialLongitudinalPositions, stream), this.network, getSimulator(), roomChecker,
                     idGenerator);

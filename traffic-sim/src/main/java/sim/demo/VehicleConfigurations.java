@@ -12,19 +12,26 @@ import org.djunits.value.vdouble.scalar.Acceleration;
 import org.djunits.value.vdouble.scalar.Duration;
 import org.djunits.value.vdouble.scalar.Length;
 import org.djunits.value.vdouble.scalar.Speed;
+import org.djutils.exceptions.Throw;
 import org.djutils.immutablecollections.Immutable;
 import org.djutils.immutablecollections.ImmutableLinkedHashMap;
 import org.djutils.immutablecollections.ImmutableMap;
+import org.djutils.logger.CategoryLogger;
 import org.opentrafficsim.base.parameters.ParameterException;
 import org.opentrafficsim.base.parameters.ParameterTypeAcceleration;
 import org.opentrafficsim.base.parameters.ParameterTypeDouble;
+import org.opentrafficsim.base.parameters.ParameterTypeDuration;
 import org.opentrafficsim.base.parameters.ParameterTypes;
+import org.opentrafficsim.base.parameters.Parameters;
 import org.opentrafficsim.core.definitions.Defaults;
 import org.opentrafficsim.core.definitions.DefaultsNl;
 import org.opentrafficsim.core.distributions.ConstantGenerator;
 import org.opentrafficsim.core.gtu.GtuTemplate;
 import org.opentrafficsim.core.gtu.GtuType;
 import org.opentrafficsim.core.parameters.ParameterFactoryByType;
+import org.opentrafficsim.road.gtu.lane.perception.categories.neighbors.Estimation;
+import org.opentrafficsim.road.gtu.lane.perception.mental.AdaptationHeadway;
+import org.opentrafficsim.road.gtu.lane.perception.mental.AdaptationSituationalAwareness;
 import org.opentrafficsim.road.gtu.lane.perception.mental.AdaptationSpeed;
 import org.opentrafficsim.road.gtu.lane.perception.mental.Fuller;
 import org.opentrafficsim.road.gtu.lane.tactical.util.lmrs.LmrsParameters;
@@ -43,7 +50,7 @@ import sim.demo.mental.TaskManagerAr;
 public class VehicleConfigurations extends Defaults implements BiFunction<GtuType, StreamInterface, GtuTemplate> {
 	
 	// new parameters
-    public static final ParameterTypeDouble INITIAL_T = new ParameterTypeDouble("INITIAL_T", "Initial desired time headway");
+    public static final ParameterTypeDuration INITIAL_TMIN = new ParameterTypeDuration("INITIAL_TMIN", "Initial minimal headway time");
 	    
     // drawing colors for GTU types
     public static final ImmutableMap<GtuType, Color> GTU_TYPE_COLORS;
@@ -78,7 +85,7 @@ public class VehicleConfigurations extends Defaults implements BiFunction<GtuTyp
     protected VehicleConfigurations() {
         super(new Locale("nl", "NL"));
         
-        // store automation level gtu types
+        // store automation level gtu types (important: index and automation level should be equal)
         automationGtuTypes.add(LEVEL0_CAR);
         automationGtuTypes.add(LEVEL1_CAR);
         automationGtuTypes.add(LEVEL2_CAR);
@@ -119,56 +126,101 @@ public class VehicleConfigurations extends Defaults implements BiFunction<GtuTyp
     }
 
 	/**
-	 * Create vehicle type variables and set applicable parameters.
+	 * Create vehicle type variables and set (non-distribution) parameters.
 	 * 
 	 * @param stream
 	 * @return Map<String, Object>
 	 * @throws ParameterException
 	 */
-	public VehicleConfigurationsBundle setVehicleTypes(StreamInterface stream) throws ParameterException {
+	public VehicleConfigurationsBundle setVehicleTypes() throws ParameterException {
 		
 		// create parameter factory for vehicle types
 		ParameterFactoryByType paramFactory = new ParameterFactoryByType();
 		
-		// set parameters per GTU type { level0, level1, level2, level3 }
-		
-		// GTU speed adherence factor
-		DistTriangular[] fSpeedValues = {
-				new DistTriangular(stream, 0.9, 1.0, 1.1),
-				new DistTriangular(stream, 0.95, 1.0, 1.05),
-				new DistTriangular(stream, 0.97, 1.0, 1.03),
-				new DistTriangular(stream, 0.99, 1.0, 1.01)};
-		
+		// define fixed parameters (not drawn from distribution)
 		// GTU headway
 		Duration[] tMinValues = {
-				Duration.instantiateSI(0.56),
-				Duration.instantiateSI(0.56),
-				Duration.instantiateSI(0.56),
-				Duration.instantiateSI(0.56)};
+				Duration.instantiateSI(0.6),
+				Duration.instantiateSI(1.2),
+				Duration.instantiateSI(0.8),
+				Duration.instantiateSI(0.8)};
 		Duration[] tMaxValues = {
 				Duration.instantiateSI(1.2),
-				Duration.instantiateSI(1.2),
+				Duration.instantiateSI(1.6),
 				Duration.instantiateSI(1.2),
 				Duration.instantiateSI(1.2)};
-		
-		// reaction time
-		Duration[] trValues = {
-				Duration.instantiateSI(0.8),
-				Duration.instantiateSI(0.4),
-				Duration.instantiateSI(0.4),
-				Duration.instantiateSI(0.4)};
 		
 		// lookahead and lookback
 		Length[] lookAheadValues = {
 				Length.instantiateSI(295.0),
-				Length.instantiateSI(295.0),
-				Length.instantiateSI(295.0),
-				Length.instantiateSI(100.0)};
+				Length.instantiateSI(140.0),
+				Length.instantiateSI(250.0),
+				Length.instantiateSI(300.0)};
 		Length[] lookBackValues = {
 				Length.instantiateSI(200.0),
-				Length.instantiateSI(200.0),
-				Length.instantiateSI(200.0),
-				Length.instantiateSI(60.0)};
+				Length.instantiateSI(20.0),
+				Length.instantiateSI(50.0),
+				Length.instantiateSI(100.0)};
+		
+		// loop through automation GTU types to set their parameters
+		for (int i = 0; i < automationGtuTypes.size(); i++) {
+			
+			// get current gtuType
+			GtuType gtuType = automationGtuTypes.get(i);
+			
+			// speed adherence factor
+			paramFactory.addParameter(gtuType, ParameterTypes.FSPEED, ParameterTypes.FSPEED.getDefaultValue());
+			// headway
+			paramFactory.addParameter(gtuType, ParameterTypes.TMAX, tMaxValues[i]);
+			paramFactory.addParameter(gtuType, ParameterTypes.TMIN, tMinValues[i]);
+			paramFactory.addParameter(gtuType, INITIAL_TMIN, tMinValues[i]);
+			// reaction time (and simulation steps)
+			paramFactory.addParameter(gtuType, ParameterTypes.TR, ParameterTypes.TR.getDefaultValue());
+			paramFactory.addParameter(gtuType, ParameterTypes.DT, ParameterTypes.DT.getDefaultValue());
+			// lookahead and lookback
+			paramFactory.addParameter(gtuType, ParameterTypes.LOOKAHEAD, lookAheadValues[i]);
+			paramFactory.addParameter(gtuType, ParameterTypes.LOOKBACK, lookBackValues[i]);
+			// affected by other vehicles
+			paramFactory.addParameter(gtuType, LmrsParameters.SOCIO, LmrsParameters.SOCIO.getDefaultValue()); 
+			paramFactory.addParameter(gtuType, Tailgating.RHO, Tailgating.RHO.getDefaultValue());
+			// perception
+			paramFactory.addParameter(gtuType, Fuller.TC, Fuller.TC.getDefaultValue());
+ 			paramFactory.addParameter(gtuType, Fuller.TS_CRIT, Fuller.TS_CRIT.getDefaultValue());
+ 			paramFactory.addParameter(gtuType, Fuller.TS_MAX, Fuller.TS_MAX.getDefaultValue());
+ 			paramFactory.addParameter(gtuType, AdaptationSituationalAwareness.SA_MIN, AdaptationSituationalAwareness.SA_MIN.getDefaultValue());
+ 			paramFactory.addParameter(gtuType, AdaptationSituationalAwareness.SA, AdaptationSituationalAwareness.SA.getDefaultValue());
+ 			paramFactory.addParameter(gtuType, AdaptationSituationalAwareness.SA_MAX, AdaptationSituationalAwareness.SA_MAX.getDefaultValue());
+ 			paramFactory.addParameter(gtuType, AdaptationSituationalAwareness.TR_MAX, AdaptationSituationalAwareness.TR_MAX.getDefaultValue());
+ 			paramFactory.addParameter(gtuType, AdaptationHeadway.BETA_T, AdaptationHeadway.BETA_T.getDefaultValue());
+ 			paramFactory.addParameter(gtuType, AdaptationSpeed.BETA_V0, AdaptationSpeed.BETA_V0.getDefaultValue());
+			// tasks
+			paramFactory.addParameter(gtuType, TaskManagerAr.ALPHA, TaskManagerAr.ALPHA.getDefaultValue());
+			paramFactory.addParameter(gtuType, TaskManagerAr.BETA, TaskManagerAr.BETA.getDefaultValue());
+			paramFactory.addParameter(gtuType, CarFollowingTask.HEXP, CarFollowingTask.HEXP.getDefaultValue());
+		}
+		
+		// return encapsulated vehicle types
+        return new VehicleConfigurationsBundle(automationGtuTypes, paramFactory);
+	}
+	
+	/** Method to draw GTU parameters from distributions.
+	 * @throws ParameterException
+	 */
+	public Parameters drawDistributionParameters(StreamInterface stream, GtuType gtuType, Parameters gtuParameters) throws ParameterException {
+		// define specific type parameters { level0, level1, level2, level3 }
+		// GTU speed adherence factor
+		DistTriangular[] fSpeedValues = {
+				new DistTriangular(stream, 0.8, 1.0, 1.2),
+				new DistTriangular(stream, 0.92, 1.0, 1.08),
+				new DistTriangular(stream, 0.94, 1.0, 1.06),
+				new DistTriangular(stream, 0.98, 1.0, 1.02)};
+		
+		// reaction time
+		DistTriangular[] trValues = {
+				new DistTriangular(stream, 0.8, 0.9, 1.0),
+				new DistTriangular(stream, 0.1, 0.15, 0.2),
+				new DistTriangular(stream, 0.1, 0.12, 0.14),
+				new DistTriangular(stream, 0.05, 0.075, 0.1)};
 		
 		// social
 		DistTriangular[] socioValues = {
@@ -182,124 +234,22 @@ public class VehicleConfigurations extends Defaults implements BiFunction<GtuTyp
 				new DistTriangular(stream, 0.5, 0.6, 0.7),
 				new DistTriangular(stream, 0.5, 0.6, 0.7)};
 		
-		// perception
-		double tcValue = 1.0;
-		double tsCritValue = 0.8;
-		double tsMaxValue = 1.0;
-		double saMinValue = 0.1;
-		DistTriangular saValue = new DistTriangular(stream, 0.0, 0.2, 0.8);
-		double saMaxValue = 1.0;
-		Duration trBestValue = Duration.instantiateSI(0.8);
-		double betaTValue = 1.0;
-		double betaV0Value = 1.0;
 		
-		// tasks
-		double alphaValue = 0.8;
-		double betaValue = 0.6;
-		Duration hexpValue = Duration.instantiateSI(1.0);
-		
-		// loop through automation GTU types to set their parameters
-		for (int i = 0; i < automationGtuTypes.size(); i++) {
-			
-			// get current gtuType
-			GtuType currentType = automationGtuTypes.get(i);
-			
-			// speed adherence factor
-			paramFactory.addParameter(currentType, ParameterTypes.FSPEED, fSpeedValues[i]);
-			// headway
-			// (set initial desired time headway T equal to reaction time)
-			paramFactory.addParameter(currentType, ParameterTypes.TMAX, tMaxValues[i]);
-			paramFactory.addParameter(currentType, ParameterTypes.TMIN, tMinValues[i]);
-			paramFactory.addParameter(currentType, INITIAL_T, trValues[i].si);
-			// reaction time (and simulation steps)
-			paramFactory.addParameter(currentType, ParameterTypes.TR, trValues[i]);
-			paramFactory.addParameter(currentType, ParameterTypes.DT, Duration.instantiateSI(0.5));
-			// lookahead and lookback
-			paramFactory.addParameter(currentType, ParameterTypes.LOOKAHEAD, lookAheadValues[i]);
-			paramFactory.addParameter(currentType, ParameterTypes.LOOKBACK, lookBackValues[i]);
-			// affected by other vehicles
-			paramFactory.addParameter(currentType, LmrsParameters.SOCIO, socioValues[i]); 
-			paramFactory.addParameter(currentType, Tailgating.RHO, rhoValues[i]);
-			// perception
-			paramFactory.addParameter(currentType, Fuller.TC, tcValue);
-			paramFactory.addParameter(currentType, Fuller.TS_CRIT, tsCritValue);
-			paramFactory.addParameter(currentType, Fuller.TS_MAX, tsMaxValue);
-			paramFactory.addParameter(currentType, CustomAdaptationSituationalAwareness.SA_MIN, saMinValue);
-			paramFactory.addParameter(currentType, CustomAdaptationSituationalAwareness.SA, saValue);
-			paramFactory.addParameter(currentType, CustomAdaptationSituationalAwareness.SA_MAX, saMaxValue);
-			paramFactory.addParameter(currentType, CustomAdaptationSituationalAwareness.TR_MAX, trBestValue);
-			paramFactory.addParameter(currentType, CustomAdaptationHeadway.BETA_T, betaTValue);
-			paramFactory.addParameter(currentType, AdaptationSpeed.BETA_V0, betaV0Value);
-			// tasks
-			paramFactory.addParameter(currentType, TaskManagerAr.ALPHA, alphaValue);
-			paramFactory.addParameter(currentType, TaskManagerAr.BETA, betaValue);
-			paramFactory.addParameter(currentType, CarFollowingTask.HEXP, hexpValue);
+		// select parameter index by automation type
+		int typeIndex = automationGtuTypes.indexOf(gtuType);
+		if (typeIndex == -1) {
+			CategoryLogger.always().error("GTU automation type is not found. Parameters cannot be adjusted according to automation types.");
+		}
+		else {
+			// set parameters for this GTU type
+			gtuParameters.setParameter(ParameterTypes.FSPEED, fSpeedValues[typeIndex].draw());
+			gtuParameters.setParameter(ParameterTypes.TR, Duration.instantiateSI(trValues[typeIndex].draw()));
+			gtuParameters.setParameter(LmrsParameters.SOCIO, socioValues[typeIndex].draw());
+			gtuParameters.setParameter(Tailgating.RHO, rhoValues[typeIndex].draw());
 		}
 		
-		// return encapsulated vehicle types and parameters
-        return new VehicleConfigurationsBundle(automationGtuTypes, paramFactory);
-		
-		// OLD:
-//		GtuType hdvCar = HDV_CAR;
-//		GtuType avCar = AV_CAR;
-//		
-//		// set parameters for HDV
-//		// speed limit adherence
-//		paramFactory.addParameter(hdvCar, ParameterTypes.FSPEED, new DistTriangular(stream, 1, 13.0 / 130));
-//		// headway
-//		paramFactory.addParameter(hdvCar, ParameterTypes.TMAX, Duration.instantiateSI(1.2));
-//		paramFactory.addParameter(hdvCar, ParameterTypes.TMIN, Duration.instantiateSI(0.56));
-//		// reaction time
-//		paramFactory.addParameter(hdvCar, ParameterTypes.TR, Duration.instantiateSI(1.5));
-//		// lookahead and lookback
-//		paramFactory.addParameter(hdvCar, ParameterTypes.LOOKAHEAD, Length.instantiateSI(295.0));
-//		paramFactory.addParameter(hdvCar, ParameterTypes.LOOKBACK, Length.instantiateSI(200.0));
-//		// affected by other vehicles
-//		paramFactory.addParameter(hdvCar, LmrsParameters.SOCIO, new DistTriangular(stream, 0.5, 0.1)); 
-//		paramFactory.addParameter(hdvCar, Tailgating.RHO, 0.6);
-//		// perception
-//		paramFactory.addParameter(hdvCar, Fuller.TC, 1.0);
-//		paramFactory.addParameter(hdvCar, Fuller.TS_CRIT, 0.8);
-//		paramFactory.addParameter(hdvCar, Fuller.TS_MAX, 1.0);
-//		paramFactory.addParameter(hdvCar, AdaptationSituationalAwareness.SA_MIN, 0.1);
-//		paramFactory.addParameter(hdvCar, AdaptationSituationalAwareness.SA, 0.5);
-//		paramFactory.addParameter(hdvCar, AdaptationSituationalAwareness.SA_MAX, 1.0);
-//		paramFactory.addParameter(hdvCar, AdaptationSituationalAwareness.TR_MAX, Duration.instantiateSI(1.5));
-//		paramFactory.addParameter(hdvCar, AdaptationHeadway.BETA_T, 1.0);
-//		paramFactory.addParameter(hdvCar, AdaptationSpeed.BETA_V0, 1.0);
-//		// tasks
-//		paramFactory.addParameter(hdvCar, TaskManagerAr.ALPHA, 0.8);
-//		paramFactory.addParameter(hdvCar, TaskManagerAr.BETA, 0.6);
-//		paramFactory.addParameter(hdvCar, CarFollowingTask.HEXP, Duration.instantiateSI(1.0));
-//		
-//		// set parameters for AV
-//		// speed limit adherence
-//		paramFactory.addParameter(avCar, ParameterTypes.FSPEED, 1.05);
-//		// headway
-//		paramFactory.addParameter(avCar, ParameterTypes.TMAX, Duration.instantiateSI(2.0));
-//		paramFactory.addParameter(avCar, ParameterTypes.TMIN, Duration.instantiateSI(0.4));
-//		// reaction time
-//		paramFactory.addParameter(avCar, ParameterTypes.TR, Duration.instantiateSI(0.5));
-//		// lookahead and lookback
-//		paramFactory.addParameter(avCar, ParameterTypes.LOOKAHEAD, Length.instantiateSI(100.0));
-//		paramFactory.addParameter(avCar, ParameterTypes.LOOKBACK, Length.instantiateSI(60.0));
-//		// affected by other vehicles
-//		paramFactory.addParameter(avCar, LmrsParameters.SOCIO, 0.8);
-//		paramFactory.addParameter(avCar, Tailgating.RHO, 0.0);
-//		// perception
-//		paramFactory.addParameter(avCar, Fuller.TC, 0.8);
-//		paramFactory.addParameter(avCar, Fuller.TS_CRIT, 0.8);
-//		paramFactory.addParameter(avCar, Fuller.TS_MAX, 1.0);
-//		paramFactory.addParameter(avCar, AdaptationSituationalAwareness.SA_MIN, 0.1);
-//		paramFactory.addParameter(avCar, AdaptationSituationalAwareness.SA, 0.5);
-//		paramFactory.addParameter(avCar, AdaptationSituationalAwareness.SA_MAX, 1.0);
-//		paramFactory.addParameter(avCar, AdaptationSituationalAwareness.TR_MAX, Duration.instantiateSI(1.5));
-//		paramFactory.addParameter(avCar, AdaptationHeadway.BETA_T, 1.0);
-//		paramFactory.addParameter(avCar, AdaptationSpeed.BETA_V0, 1.0);
-//		// tasks
-//		paramFactory.addParameter(avCar, TaskManagerAr.ALPHA, 0.8);
-//		paramFactory.addParameter(avCar, TaskManagerAr.BETA, 0.6);
-//		paramFactory.addParameter(avCar, CarFollowingTask.HEXP, Duration.instantiateSI(1.0));
+		// return new parameter values
+		return gtuParameters;
 	}
 }
 

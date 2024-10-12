@@ -36,16 +36,22 @@ public class CarFollowingTask extends AbstractTask
     public double calculateTaskDemand(final LanePerception perception, final LaneBasedGtu gtu, final Parameters parameters)
             throws ParameterException, GtuException
     {
-        try
-        {
-            NeighborsPerception neighbors = perception.getPerceptionCategory(NeighborsPerception.class);
-            PerceptionCollectable<HeadwayGtu, LaneBasedGtu> leaders = neighbors.getLeaders(RelativeLane.CURRENT);
-            Duration headway = leaders.collect(new TaskHeadwayCollector(gtu.getSpeed()));
-            return headway == null ? 0.0 : Math.exp(-headway.si / parameters.getParameter(HEXP).si);
-        }
-        catch (OperationalPlanException ex)
-        {
-            throw new GtuException(ex);
-        }
+    	// only add task demand for non automated car-following (automation level 0)
+    	String gtuType = gtu.getType().getId();
+    	if (gtuType.contains("LEVEL0")) {
+	        try
+	        {
+	            NeighborsPerception neighbors = perception.getPerceptionCategory(NeighborsPerception.class);
+	            PerceptionCollectable<HeadwayGtu, LaneBasedGtu> leaders = neighbors.getLeaders(RelativeLane.CURRENT);
+	            Duration headway = leaders.collect(new TaskHeadwayCollector(gtu.getSpeed()));
+	            return headway == null ? 0.0 : Math.exp(-headway.si / parameters.getParameter(HEXP).si);
+	        }
+	        catch (OperationalPlanException ex)
+	        {
+	            throw new GtuException(ex);
+	        }
+    	} else {
+    		return 0.0;
+    	}
     }
 }

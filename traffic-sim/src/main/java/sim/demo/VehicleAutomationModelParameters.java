@@ -18,20 +18,20 @@ public class VehicleAutomationModelParameters
     private double mainDemand;
     private double rampDemand;
     private boolean additionalIncentives;
-    private double tMin;
-    private double tMax;
+    private String inputValuesFilePath;
     private String singleOutputFilePath;
     private String intermediateMeanValuesFilePath;
     private String sequenceOutputFilePath;
-    private String trajectoryOutputFilePath;
+    private String getlaneChangeOutputFilePath;
 
     // define simulation parameters in constructor
     public VehicleAutomationModelParameters(boolean headless, long seed, double simTime, double level0Fraction, 
     										double level1Fraction, double level2Fraction, double level3Fraction, 
     										double leftFraction, double mainDemand, double rampDemand, 
-    										boolean additionalIncentives, double tMin, double tMax, 
+    										boolean additionalIncentives,
+    										String inputValuesFilePath,
     										String singleOutputFilePath, String intermediateMeanValuesFilePath,
-    										String sequenceOutputFilePath, String trajectoryOutputFilePath) {
+    										String sequenceOutputFilePath, String getlaneChangeOutputFilePath) {
     	this.headless = headless;
     	this.seed = seed;
         this.simTime = simTime;
@@ -43,12 +43,11 @@ public class VehicleAutomationModelParameters
         this.mainDemand = mainDemand;
         this.rampDemand = rampDemand;
         this.additionalIncentives = additionalIncentives;
-        this.tMin = tMin;
-        this.tMax = tMax;
+        this.inputValuesFilePath = inputValuesFilePath;
         this.singleOutputFilePath = singleOutputFilePath;
         this.intermediateMeanValuesFilePath = intermediateMeanValuesFilePath;
         this.sequenceOutputFilePath = sequenceOutputFilePath;
-        this.trajectoryOutputFilePath = trajectoryOutputFilePath;
+        this.getlaneChangeOutputFilePath = getlaneChangeOutputFilePath;
     }
     
     // create getters and setters for the available parameters
@@ -129,18 +128,13 @@ public class VehicleAutomationModelParameters
         this.additionalIncentives = additionalIncentives;
     }
     
-    public double getTMin() {
-        return tMin;
-    }
-    public void setTMin(double tMin) {
-        this.tMin = tMin;
-    }
     
-    public double getTMax() {
-        return tMax;
+    // getter and setters for file locations
+    public String getInputValuesFilePath() {
+        return inputValuesFilePath;
     }
-    public void setTMax(double tMax) {
-        this.tMax = tMax;
+    public void setInputValuesFilePath(String inputValuesFilePath) {
+        this.inputValuesFilePath = inputValuesFilePath;
     }
     
     public String getSingleOutputFilePath() {
@@ -164,11 +158,11 @@ public class VehicleAutomationModelParameters
         this.sequenceOutputFilePath = sequenceOutputFilePath;
     }
     
-    public String getTrajectoryOutputFilePath() {
-        return trajectoryOutputFilePath;
+    public String getlaneChangeOutputFilePath() {
+        return getlaneChangeOutputFilePath;
     }
-    public void setTrajectoryOutPutFilePath(String trajectoryOutputFilePath) {
-        this.trajectoryOutputFilePath = trajectoryOutputFilePath;
+    public void setlaneChangeOutputFilePath(String getlaneChangeOutputFilePath) {
+        this.getlaneChangeOutputFilePath = getlaneChangeOutputFilePath;
     }
 
 }

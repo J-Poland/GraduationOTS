@@ -54,7 +54,7 @@ public class TrafficInteractionAdaptations {
     		// this is necessary to draw different values for different GTUs and different times
     		// but keep reproducibility of the simulation
     		uniqueSeed = simStream.nextLong() + Double.doubleToLongBits(simTime.si) + Long.parseLong(gtu.getId());
-    		StreamInterface stream = new MersenneTwister(Math.abs(new Random(this.uniqueSeed).nextLong()) + 1);
+    		StreamInterface stream = new MersenneTwister(Math.abs(uniqueSeed));
     		this.stream = stream;
     	}
     	
@@ -70,14 +70,19 @@ public class TrafficInteractionAdaptations {
             // get own gtu type
             String thisType = gtu.getType().toString();
             // get first leader
-            HeadwayGtu gtuInFront = leaders.first();
-            String inFrontType = gtuInFront.getGtuType().toString();
-            // change behaviour if vehicle in front is of type Level-3 and this gtu is not
+            HeadwayGtu gtuLeader = leaders.first();
+            String leaderType = gtuLeader.getGtuType().toString();
+            // change behaviour if vehicle in front is of type Level-3 and this gtu is Level-0
             // example of gtu type string: "GtuType: NL.LEVEL3CAR"
-            if (!thisType.contains("LEVEL3") && inFrontType.contains("LEVEL3")) {
+            if (thisType.contains("LEVEL0") && leaderType.contains("LEVEL3")) {
             	// lower headway
-            	double adjustedT = gtu.getParameters().getParameter(VehicleConfigurations.INITIAL_T) + drawFromDistribution(stream, 0.0, 0.15, 0.3);
-            	gtu.getParameters().setParameter(ParameterTypes.T, Duration.instantiateSI(adjustedT));
+            	double adjustedT = gtu.getParameters().getParameter(VehicleConfigurations.INITIAL_TMIN).si - drawFromDistribution(stream, 0.0, 0.15, 0.3);
+            	gtu.getParameters().setParameter(ParameterTypes.TMIN, Duration.instantiateSI(adjustedT));
+            }
+            // keep initial headway value whenever the leader type is not level-3
+            else {
+            	double initial_value = gtu.getParameters().getParameter(VehicleConfigurations.INITIAL_TMIN).si;
+            	gtu.getParameters().setParameter(ParameterTypes.TMIN, Duration.instantiateSI(initial_value));
             }
     	}
     }
@@ -89,14 +94,9 @@ public class TrafficInteractionAdaptations {
     	private long uniqueSeed;
     	private LaneBasedGtu gtu;
     	private StreamInterface stream;
-    	private boolean behaviorChanged;
-    	private double dCoop;
     	
     	public LaneChangingBehavior(LaneBasedGtu gtu) throws OperationalPlanException, ParameterException
-    	{
-    		// initial changed bool
-    		behaviorChanged = false;
-    		
+    	{	
     		// get gtu
     		this.gtu = gtu;
     		
@@ -108,7 +108,7 @@ public class TrafficInteractionAdaptations {
     		// this is necessary to draw different values for different GTUs and different times
     		// but keep reproducibility of the simulation
     		uniqueSeed = simStream.nextLong() + Double.doubleToLongBits(simTime.si) + Long.parseLong(gtu.getId());
-    		StreamInterface stream = new MersenneTwister(Math.abs(new Random(this.uniqueSeed).nextLong()) + 1);
+    		StreamInterface stream = new MersenneTwister(Math.abs(uniqueSeed));
     		this.stream = stream;
     	}
     	
@@ -118,10 +118,10 @@ public class TrafficInteractionAdaptations {
             String thisType = gtu.getType().toString();
     		// create string from leader vehicle type
     		String leaderType = leaderGtu.getGtuType().toString();
-            // change behaviour parameter value if other vehicle is of type level-3 and this gtu is not
+            // change behaviour parameter value if other vehicle is of type level-3 and this gtu is level-0
             // example of gtu type string: "GtuType: NL.LEVEL3CAR"
-            if (!thisType.contains("LEVEL3") && leaderType.contains("LEVEL3")) {
-            	return drawFromDistribution(stream, 0.0, 0.15, 0.3);
+            if (thisType.contains("LEVEL0") && leaderType.contains("LEVEL3")) {
+            	return drawFromDistribution(stream, 0.0, 0.05, 0.1);
             }
             // not found? return 0.0, no influence from traffic
             else {
