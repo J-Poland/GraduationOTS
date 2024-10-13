@@ -10,7 +10,7 @@ import numpy as np
 class VehicleAutomationModel:
 
     # initialize this object
-    def __init__(self, experiment_name, seed=0, user_feedback=True):
+    def __init__(self, experiment_name, seed=None, user_feedback=True):
         # input variables
         self.experiment_name = experiment_name
         self.seed = seed
@@ -37,7 +37,7 @@ class VehicleAutomationModel:
         self.output_folder = None
         self.generate_output_folder()
 
-        # output file name
+        # output for EMA Workbench experiment file name
         self.output_file_name = r'singleOutputData.csv'
 
         # classpath
@@ -50,8 +50,10 @@ class VehicleAutomationModel:
 
     # function to create output folder path
     def generate_output_folder(self):
-        output_folder = os.path.join(self.resources_folder, f'{self.experiment_name}',
-                                     f'{self.experiment_name}_{self.replication_count}')
+        output_folder = os.path.join(self.resources_folder,
+                                     f'{self.experiment_name}',
+                                     f'seed_{self.seed}',
+                                     f'run_{self.replication_count}')
         self.output_folder = output_folder
 
     # function to compile project
@@ -70,39 +72,48 @@ class VehicleAutomationModel:
     # function to start the simulation's Java model
     def run_simulation(self, sim_time, level0_fraction, level1_fraction, level2_fraction, level3_fraction,
                        main_demand, ramp_demand):
-        # get output folder for this run
-        output_path = self.output_folder
+        # only run simulation when seed is known
+        if self.seed is not None:
+            # get output folder for this run
+            output_path = self.output_folder
 
-        # run simulation headless (headless = 'true') or with animation window (headless = 'false')
-        # TODO: with animation is still subject to errors, why?
-        run_headless = 'true'
+            # run simulation headless (headless = 'true') or with animation window (headless = 'false')
+            # TODO: with animation is still subject to errors, why?
+            run_headless = 'true'
 
-        # get current seed
-        seed = self.seed
+            # get current seed
+            seed = self.seed
 
-        # set input parameters
-        input_parameters = [
-            f'-headless={run_headless}',
-            f'-seed={seed}',
-            f'-simTime={sim_time}',
-            f'-level0Fraction={level0_fraction}',
-            f'-level1Fraction={level1_fraction}',
-            f'-level2Fraction={level2_fraction}',
-            f'-level3Fraction={level3_fraction}',
-            f'-mainDemand={main_demand}',
-            f'-rampDemand={ramp_demand}',
-            rf'-singleOutputFilePath={output_path}\\singleOutputData.csv',
-            rf'-intermediateMeanValuesFilePath={output_path}\\intermediateOutputData.csv',
-            rf'-sequenceOutputFilePath={output_path}\\sequenceOutputData.csv',
-            rf'-trajectoryOutputFilePath={output_path}\\trajectoryOutputData.csv'
-        ]
+            print(f'Input: demand={main_demand} and ramp_demand={ramp_demand}')
 
-        # compile and run Java file
-        self.java_file.java_parameters = input_parameters
-        self.java_file.run_java_file()
+            # set input parameters
+            input_parameters = [
+                f'-headless={run_headless}',
+                f'-seed={seed}',
+                f'-simTime={sim_time}',
+                f'-level0Fraction={level0_fraction}',
+                f'-level1Fraction={level1_fraction}',
+                f'-level2Fraction={level2_fraction}',
+                f'-level3Fraction={level3_fraction}',
+                f'-mainDemand={main_demand}',
+                f'-rampDemand={ramp_demand}',
+                rf'-inputValuesFilePath={output_path}\\inputValues.csv',
+                rf'-singleOutputFilePath={output_path}\\singleOutputData.csv',
+                rf'-intermediateMeanValuesFilePath={output_path}\\intermediateOutputData.csv',
+                rf'-sequenceOutputFilePath={output_path}\\sequenceOutputData.csv',
+                rf'-laneChangeOutputFilePath={output_path}\\laneChangeOutputData.csv'
+            ]
 
-        # return corresponding output folder and file name
-        return output_path
+            # compile and run Java file
+            self.java_file.java_parameters = input_parameters
+            self.java_file.run_java_file()
+
+            # return corresponding output folder and file name
+            return output_path
+
+        # seed not provided? Provide user feedback
+        else:
+            print("Seed is None, so simulation cannot run.")
 
     # function to load simulation output
     def load_simulation_output(self, output_folder_path, output_file_name, detailed_output_file_name=None,
