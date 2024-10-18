@@ -18,20 +18,21 @@ public class VehicleAutomationModelParameters
     private double mainDemand;
     private double rampDemand;
     private boolean additionalIncentives;
-    private String inputValuesFilePath;
-    private String singleOutputFilePath;
-    private String intermediateMeanValuesFilePath;
-    private String sequenceOutputFilePath;
-    private String getlaneChangeOutputFilePath;
+    private String outputFolderPath;
+    private String inputValuesFileName;
+    private String singleOutputFileName;
+    private String intermediateMeanValuesFileName;
+    private String sequenceOutputFileName;
+    private String getlaneChangeOutputFileName;
 
     // define simulation parameters in constructor
     public VehicleAutomationModelParameters(boolean headless, long seed, double simTime, double level0Fraction, 
     										double level1Fraction, double level2Fraction, double level3Fraction, 
     										double leftFraction, double mainDemand, double rampDemand, 
     										boolean additionalIncentives,
-    										String inputValuesFilePath,
-    										String singleOutputFilePath, String intermediateMeanValuesFilePath,
-    										String sequenceOutputFilePath, String getlaneChangeOutputFilePath) {
+    										String outputFolderPath, String inputValuesFilePath,
+    										String singleOutputFileName, String intermediateMeanValuesFileName,
+    										String sequenceOutputFileName, String getlaneChangeOutputFileName) {
     	this.headless = headless;
     	this.seed = seed;
         this.simTime = simTime;
@@ -43,11 +44,12 @@ public class VehicleAutomationModelParameters
         this.mainDemand = mainDemand;
         this.rampDemand = rampDemand;
         this.additionalIncentives = additionalIncentives;
-        this.inputValuesFilePath = inputValuesFilePath;
-        this.singleOutputFilePath = singleOutputFilePath;
-        this.intermediateMeanValuesFilePath = intermediateMeanValuesFilePath;
-        this.sequenceOutputFilePath = sequenceOutputFilePath;
-        this.getlaneChangeOutputFilePath = getlaneChangeOutputFilePath;
+        this.outputFolderPath = outputFolderPath;
+        this.inputValuesFileName = inputValuesFilePath;
+        this.singleOutputFileName = singleOutputFileName;
+        this.intermediateMeanValuesFileName = intermediateMeanValuesFileName;
+        this.sequenceOutputFileName = sequenceOutputFileName;
+        this.getlaneChangeOutputFileName = getlaneChangeOutputFileName;
     }
     
     // create getters and setters for the available parameters
@@ -130,39 +132,46 @@ public class VehicleAutomationModelParameters
     
     
     // getter and setters for file locations
-    public String getInputValuesFilePath() {
-        return inputValuesFilePath;
+    public String getOutputFolderPath() {
+        return outputFolderPath;
     }
-    public void setInputValuesFilePath(String inputValuesFilePath) {
-        this.inputValuesFilePath = inputValuesFilePath;
-    }
-    
-    public String getSingleOutputFilePath() {
-        return singleOutputFilePath;
-    }
-    public void setSingleOutPutFilePath(String singleOutputFilePath) {
-        this.singleOutputFilePath = singleOutputFilePath;
+    public void setOutputFolderPath(String outputFolderPath) {
+        this.outputFolderPath = outputFolderPath;
     }
     
-    public String getIntermediateMeanValuesFilePath() {
-        return intermediateMeanValuesFilePath;
+    public String getInputValuesFileName() {
+        return inputValuesFileName;
     }
-    public void setIntermediateMeanValuesFilePath(String intermediateMeanValuesFilePath) {
-        this.intermediateMeanValuesFilePath = intermediateMeanValuesFilePath;
-    }
-    
-    public String getSequenceOutputFilePath() {
-        return sequenceOutputFilePath;
-    }
-    public void setSequenceOutPutFilePath(String sequenceOutputFilePath) {
-        this.sequenceOutputFilePath = sequenceOutputFilePath;
+    public void setInputValuesFilePath(String inputValuesFileName) {
+        this.inputValuesFileName = inputValuesFileName;
     }
     
-    public String getlaneChangeOutputFilePath() {
-        return getlaneChangeOutputFilePath;
+    public String getSingleOutputFileName() {
+        return singleOutputFileName;
     }
-    public void setlaneChangeOutputFilePath(String getlaneChangeOutputFilePath) {
-        this.getlaneChangeOutputFilePath = getlaneChangeOutputFilePath;
+    public void setSingleOutPutFileName(String singleOutputFileName) {
+        this.singleOutputFileName = singleOutputFileName;
+    }
+    
+    public String getIntermediateMeanValuesFileName() {
+        return intermediateMeanValuesFileName;
+    }
+    public void setIntermediateMeanValuesFileName(String intermediateMeanValuesFileName) {
+        this.intermediateMeanValuesFileName = intermediateMeanValuesFileName;
+    }
+    
+    public String getSequenceOutputFileName() {
+        return sequenceOutputFileName;
+    }
+    public void setSequenceOutPutFileName(String sequenceOutputFileName) {
+        this.sequenceOutputFileName = sequenceOutputFileName;
+    }
+    
+    public String getlaneChangeOutputFileName() {
+        return getlaneChangeOutputFileName;
+    }
+    public void setlaneChangeOutputFileName(String getlaneChangeOutputFileName) {
+        this.getlaneChangeOutputFileName = getlaneChangeOutputFileName;
     }
 
 }

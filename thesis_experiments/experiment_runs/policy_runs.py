@@ -70,7 +70,7 @@ def create_model(_seed):
     _policies = define_policies()
 
     # define model constants
-    _ema_model.constants = [Constant('sim_time', 1800)]  # 28800 8 hours of traffic simulation, 1800 is 30 min
+    _ema_model.constants = [Constant('sim_time', 600)]  # 28800 8 hours of traffic simulation, 1800 is 30 min
 
     # define levers outside of policies
     _ema_model.levers = []
@@ -90,9 +90,7 @@ def create_model(_seed):
     _ema_model.outcomes = [ScalarOutcome('mean_density'),
                            ScalarOutcome('mean_flow'),
                            ScalarOutcome('mean_speed'),
-                           ScalarOutcome('mean_travel_time'),
-                           ScalarOutcome('mean_headway_time'),
-                           ScalarOutcome('mean_headway_distance')]
+                           ScalarOutcome('mean_travel_time')]
 
     return _ots_model, _ema_model, _policies
 
@@ -102,7 +100,7 @@ if __name__ == '__main__':
 
     # experiment name and number
     experiment_string = 'full_level_runs'
-    experiment_number = 4
+    experiment_number = 0
     experiment_name = f'{experiment_string}_{experiment_number}'
 
     # create folder for experiment results
@@ -125,7 +123,7 @@ if __name__ == '__main__':
     # run experiments for multiple seeds
     seeds = [0,]
     # select scenarios per policy
-    num_scenarios = 10
+    num_scenarios = 40
     for seed in seeds:
         print('\n'
               f'{datetime.now().time().strftime("%H:%M:%S")}: '

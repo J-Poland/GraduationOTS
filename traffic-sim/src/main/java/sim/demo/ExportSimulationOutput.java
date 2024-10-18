@@ -1,29 +1,64 @@
 package sim.demo;
 
 import java.io.File;
-import java.io.FileWriter;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 import de.siegmar.fastcsv.writer.CsvWriter;
 
 
 /**
  * Class to handle data export.
+ * 
+ * Data is stored over different CSVs. To lower the file size, all these CSVs are stored within a zip file.
+ * Because a zip file is used, data has to be written to a ZipOutputStream. This ZipOutputStream can add a new
+ * entry to insert a file. When this entry is open, data can be written to the file. Once the entry is closed
  */
 public class ExportSimulationOutput
 {
-	/** Sequence file writer */
+	/** Path for output folder. */
+	String outputFolder;
+	
+	/** Writers per output file. */
+	CsvWriter inputWriter = null;
 	CsvWriter sequenceWriter = null;
+	CsvWriter singleWriter = null;
+	CsvWriter intermediateWriter = null;
+	CsvWriter laneChangeWriter = null;
 	
 	/**
 	 * Constructor for ExportSimulationOutput class.
 	 */
-	public ExportSimulationOutput()
-	{
+	public ExportSimulationOutput(String outputFolderPath, String inputFileName, String sequenceFileName, String singleFileName,
+								  String intermediateFileName, String laneChangeFileName)
+	{	
+		// set output folder path
+		outputFolder = outputFolderPath;
 		
+		// check whether this directory exists
+		checkDirectory(outputFolder);
+		
+		// create zip file CSV writers for all required output files
+		inputWriter = createWriter(inputFileName);
+		sequenceWriter = createWriter(sequenceFileName);
+		singleWriter = createWriter(singleFileName);
+		intermediateWriter = createWriter(intermediateFileName);
+		laneChangeWriter = createWriter(laneChangeFileName);
+		
+		// close all writers when program is finished or Python terminates the Java program
+		// otherwise the generated zip files may be corrupted
+		// unfortunately, terminating the program from Eclipse will perform a hard kill
+		// in that case, no streams are closed and thus zip files will be corrupted
+		Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+	        System.out.println("\nShutdown hook triggered. Closing zip files...");
+	        closeAllWriterStreams();
+	        System.out.println("Done!");
+	    }));
 	}
 	
 	
@@ -44,18 +79,64 @@ public class ExportSimulationOutput
 	}
 	
 	/**
-	 * Function to create a sequence CDV writer.
-	 * @param sequenceFilePath
+	 * Function to create a writer that writes a CSV file into a zip.
+	 * @param fileName
+	 * @return writer
 	 */
-	public void initializeSequenceFile(String sequenceFilePath) {
-		// ensure that directory exists
-     	checkDirectory(sequenceFilePath);
-     	
-        // write output data to given CSV file
+	private CsvWriter createWriter(String fileName)
+	{
+		CsvWriter writer = null;
+		
+		checkDirectory(outputFolder + "\\" + fileName);
+		
 		try {
-			FileWriter fileWriter = new FileWriter(sequenceFilePath);
-			// create sequence CSV writer
-	        sequenceWriter = CsvWriter.builder().build(fileWriter);
+			// create a FileOutputStream for the zip file
+	    	FileOutputStream fileOutputStream = new FileOutputStream(outputFolder + "\\" + 
+	    															 fileName.substring(0, fileName.length() - 4) + ".zip");
+			// wrap FileOutputStream with a ZipOutputStream
+	    	ZipOutputStream zipOutputStream = new ZipOutputStream(fileOutputStream);
+			// add the CSV to the zip file
+	        ZipEntry zipEntry = new ZipEntry(fileName);
+	        zipOutputStream.putNextEntry(zipEntry);
+	        // create a stream that writes to this CSV
+	        OutputStreamWriter outputStreamWriter = new OutputStreamWriter(zipOutputStream);
+	        // create CSV writer that writes to the stream
+	        writer = CsvWriter.builder().build(outputStreamWriter);
+	        		
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		// return writer
+        return writer;
+	}
+	
+	/**
+	 * Function to close all writer streams.
+	 */
+	public void closeAllWriterStreams() {
+		try {
+			inputWriter.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		try {
+			sequenceWriter.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		try {
+			singleWriter.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		try {
+			intermediateWriter.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		try {
+			laneChangeWriter.close();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -66,7 +147,8 @@ public class ExportSimulationOutput
 	 * @param headers
 	 */
 	public void writeSequenceDataHeaders(ArrayList<String> headers) {
-		sequenceWriter.writeRecord(headers);
+        // write headers
+        sequenceWriter.writeRecord(headers);
 	}
 	
 	/**
@@ -85,8 +167,8 @@ public class ExportSimulationOutput
 			row.add(value);
 		}
 		
-		// write this new row to the file (it is automatically flushed)
-		sequenceWriter.writeRecord(row);
+        // write headers
+        sequenceWriter.writeRecord(row);
 	}
 	
 	/**
@@ -95,43 +177,30 @@ public class ExportSimulationOutput
 	 * @param inputValuesMap
 	 * @param filePath
 	 */
-	public void exportInputToCsv(Map<String, String> inputValuesMap, String inputFilePath) {
-		
+	public void exportInputToCsv(Map<String, String> inputValuesMap, String inputFileName) {
 		// only continue when input data is available
 		if (!inputValuesMap.isEmpty()) {
 			
 			// user feedback
-			System.out.println("\nInput parameters exporting to CSV file at \n" + "'" + inputFilePath + "'");
+			System.out.println("\nInput parameters exporting to CSV file at \n" + "'" + outputFolder + "\\" + inputFileName + "'");
 			
-			// ensure that directories exist
-			checkDirectory(inputFilePath);
+			// get headers and values
+            ArrayList<String> headerList = new ArrayList<String>();
+            List<String> valueList = new ArrayList<String>();
+            for (String key : inputValuesMap.keySet()) {
+                headerList.add(key);
+                valueList.add(inputValuesMap.get(key));
+            }
 			
-			// write output data to given CSV file
-	        try (FileWriter fileWriter = new FileWriter(inputFilePath)) {
-	        	
-	        	// create CSV writer
-	            CsvWriter csvWriter = CsvWriter.builder().build(fileWriter);
-	            		
-	            // get headers and values
-	            ArrayList<String> headerList = new ArrayList<String>();
-	            List<String> valueList = new ArrayList<String>();
-	            for (String key : inputValuesMap.keySet()) {
-	                headerList.add(key);
-	                valueList.add(inputValuesMap.get(key));
-	            }
+            // write headers in first row
+            inputWriter.writeRecord(headerList);
+            
+            // write values in second row
+            inputWriter.writeRecord(valueList);
+            
+            // user feedback
+            System.out.println("Input parameters CSV file created successfully.\n");
 	            
-	            // write headers in first row
-	            csvWriter.writeRecord(headerList);
-	            
-	            // write values in second row
-	            csvWriter.writeRecord(valueList);
-	            
-	            // user feedback
-	            System.out.println("Input parameters CSV file created successfully.\n");
-	        
-	        } catch (IOException e) {
-	            e.printStackTrace();
-	        }
 		}
 	}
 	
@@ -140,232 +209,116 @@ public class ExportSimulationOutput
 	 * 
 	 * @param filePath
 	 */
-	public void exportSingleToCsv(Map<String, Object> singleOutputMap, String singleFilePath) {
+	public void exportSingleToCsv(Map<String, Object> singleOutputMap, String singleFileName) {
 		
 		// only continue when single output data is available
 		if (!singleOutputMap.isEmpty()) {
 			
 			// user feedback
-			System.out.println("\nSingle output data exporting to CSV file at \n" + "'" + singleFilePath + "'");
-			
-			// ensure that directories exist
-			checkDirectory(singleFilePath);
-			
-			// write output data to given CSV file
-	        try (FileWriter fileWriter = new FileWriter(singleFilePath)) {
-	        	
-	        	// create CSV writer
-	            CsvWriter csvWriter = CsvWriter.builder().build(fileWriter);
-	            		
-	            // get headers and values for singletOutputMap
-	            ArrayList<String> headerList = new ArrayList<String>();
-	            List<String> valueList = new ArrayList<String>();
-	            for (String key : singleOutputMap.keySet()) {
-	                headerList.add(key);
-	                valueList.add(singleOutputMap.get(key).toString());
-	            }
-	            
-	            // write headers in first row
-	            csvWriter.writeRecord(headerList);
-	            
-	            // write values in second row
-	            csvWriter.writeRecord(valueList);
-	            
-	            // user feedback
-	            System.out.println("Single CSV file created successfully.");
-	        
-	        } catch (IOException e) {
-	            e.printStackTrace();
-	        }
+			System.out.println("\nSingle output data exporting to CSV file at \n" + "'" + outputFolder + "\\" + singleFileName + "'");
+					
+            // get headers and values for singletOutputMap
+            ArrayList<String> headerList = new ArrayList<String>();
+            List<String> valueList = new ArrayList<String>();
+            for (String key : singleOutputMap.keySet()) {
+                headerList.add(key);
+                valueList.add(singleOutputMap.get(key).toString());
+            }
+            
+            // write headers in first row
+            singleWriter.writeRecord(headerList);
+            
+            // write values in second row
+            singleWriter.writeRecord(valueList);
 		}
 	}
 	
-//	/**
-//	 * Function to export sequence (time series) simulation data to CSV file.
-//	 * 
-//	 * @param filePath
-//	 */
-//	public void exportSequenceToCsv(Map<String, GtuSequenceData> sequenceOutputMap, String sequenceFilePath) {
-//	    // only continue when single output data is available
-//	    if (!sequenceOutputMap.isEmpty()) {
-//	        
-//	        // user feedback
-//	        System.out.println("\nSequence output data exporting to CSV file at \n" + "'" + sequenceFilePath + "'");
-//	        
-//	        // ensure that directories exist
-//	     	checkDirectory(sequenceFilePath);
-//	        
-//	        // collect all unique variable names
-//	        Set<String> variableNames = new HashSet<>();
-//	        for (GtuSequenceData gtuData : sequenceOutputMap.values()) {
-//	            for (DataPoint dataPoint : gtuData.getDataPoints()) {
-//	                variableNames.addAll(dataPoint.getValues().keySet());
-//	            }
-//	        }
-//	        
-//	        // write output data to given CSV file
-//	        try (FileWriter fileWriter = new FileWriter(sequenceFilePath)) {
-//	            
-//	            // create CSV writer
-//	            CsvWriter csvWriter = CsvWriter.builder().build(fileWriter);
-//	            
-//	            // initialise headers list
-//	            List<String> headers = new ArrayList<>();
-//	            headers.add("gtu_id");
-//	            headers.add("simulation_time");
-//	            headers.addAll(variableNames);
-//	            
-//	            // write headers to CSV
-//	            csvWriter.writeRecord(headers);
-//	            
-//	            // iterate over outer GtuSequenceData (GTU IDs)
-//	            for (Map.Entry<String, GtuSequenceData> outerEntry : sequenceOutputMap.entrySet()) {
-//	                String gtuId = outerEntry.getKey();
-//	                GtuSequenceData gtuData = outerEntry.getValue();
-//	                
-//	                // iterate over data points in GtuData
-//	                for (DataPoint dataPoint : gtuData.getDataPoints()) {
-//	                    double simulationTime = dataPoint.getSimulationTime();
-//	                    Map<String, Object> values = dataPoint.getValues();
-//	                    
-//	                    // create a row for each data point
-//	                    List<String> row = new ArrayList<>();
-//	                    row.add(gtuId);
-//	                    row.add(String.valueOf(simulationTime));
-//	                    
-//	                    // add variable values to the row
-//	                    for (String variable : variableNames) {
-//	                        Object value = values.get(variable);
-//	                        row.add(value != null ? value.toString() : "");
-//	                    }
-//	                    
-//	                    // write the row to CSV
-//	                    csvWriter.writeRecord(row);
-//	                }
-//	            }
-//	            
-//	            // user feedback
-//	            System.out.println("Sequence CSV file created successfully.");
-//	        
-//	        } catch (IOException exception) {
-//	            exception.printStackTrace();
-//	        }
-//	    }
-//	}
 	
-	public void exportIntermediateMeanValuesToCsv(Map<String, ArrayList<Double>> meanMap, String intermediateMeanValuesFilePath) {
-    	
+	public void exportIntermediateMeanValuesToCsv(Map<String, ArrayList<Double>> meanMap, String intermediateMeanValuesFileName) {
 		// only continue when output data is available
 		if (!meanMap.isEmpty()) {
 			
 			// user feedback
-			System.out.println("\nIntermediate output data exporting to CSV file at \n" + "'" + intermediateMeanValuesFilePath + "'"); 
+			System.out.println("\nIntermediate output data exporting to CSV file at \n" + "'" + outputFolder + "\\" + intermediateMeanValuesFileName + "'"); 
 			
-			// ensure that directories exist
-			checkDirectory(intermediateMeanValuesFilePath);
-			
-			// write output data to given CSV file
-	        try (FileWriter fileWriter = new FileWriter(intermediateMeanValuesFilePath)) {
-	        	
-	        	// create CSV writer
-	            CsvWriter csvWriter = CsvWriter.builder().build(fileWriter);
-	    	
-	            // determine max value count
-	            int maxCount = 0;
-	            for (ArrayList<Double> values : meanMap.values()) {
-	            	if (values.size() > maxCount) {
-	            		maxCount = values.size();
-	            	}
-	            }
-	            
-	            // set headers
-	            ArrayList<String> headers = new ArrayList<String>();
-	            for (String variable : meanMap.keySet()) {
-	            	headers.add(variable);
-	            }
-	            // write headers to CSV
-                csvWriter.writeRecord(headers);
-	            
-	            // iterate through rows (max count)
-	            for (int i = 0; i < maxCount; i++) {
-	            	// create value list for this row
-	            	ArrayList<String> row = new ArrayList<String>();
-			        // loop through stored variable values
-			    	for (ArrayList<Double> values : meanMap.values()) {
-			    		// check whether current index is valid for this variable
-			    		// not valid? then save an empty value
-			    		if (i >= values.size()) {
-			    			row.add("");
-			    			continue;
-			    		}
-			    		// get value for this variable for this row
-			    		row.add(values.get(i).toString());
-			    	}
-			    	
-			    	// write the row to CSV
-                    csvWriter.writeRecord(row);
-                }
+            // determine max value count
+            int maxCount = 0;
+            for (ArrayList<Double> values : meanMap.values()) {
+            	if (values.size() > maxCount) {
+            		maxCount = values.size();
+            	}
+            }
             
-	            // user feedback
-	            System.out.println("Intermediate CSV file created successfully.");
+            // set headers
+            ArrayList<String> headers = new ArrayList<String>();
+            for (String variable : meanMap.keySet()) {
+            	headers.add(variable);
+            }
+            // write headers to CSV
+            intermediateWriter.writeRecord(headers);
+	            
+            // iterate through rows (max count)
+            for (int i = 0; i < maxCount; i++) {
+            	// create value list for this row
+            	ArrayList<String> row = new ArrayList<String>();
+		        // loop through stored variable values
+		    	for (ArrayList<Double> values : meanMap.values()) {
+		    		// check whether current index is valid for this variable
+		    		// not valid? then save an empty value
+		    		if (i >= values.size()) {
+		    			row.add("");
+		    			continue;
+		    		}
+		    		// get value for this variable for this row
+		    		row.add(values.get(i).toString());
+		    	}
+		    	
+		    	// write the row to CSV
+                intermediateWriter.writeRecord(row);
+            }
             
-	        } catch (IOException exception) {
-	            exception.printStackTrace();
-	        }
+            // user feedback
+            System.out.println("Intermediate CSV file created successfully.");
 		}
     	
     }
 	
 	public void exportLaneChangesToCsv(ArrayList<String> laneChangeTime, ArrayList<String> laneChangeIds, ArrayList<String> laneChangeDirections,
-			ArrayList<String> laneChangeLinks, ArrayList<String> laneChangeFromLanes, String laneChangeFilePath) {
-		
+			ArrayList<String> laneChangeLinks, ArrayList<String> laneChangeFromLanes, String laneChangeFileName) {
 		// only continue when output data is available
 		if (!laneChangeIds.isEmpty()) {
 			
 			// user feedback
-			System.out.println("\nLane change output data exporting to CSV file at \n" + "'" + laneChangeFilePath + "'"); 
+			System.out.println("\nLane change output data exporting to CSV file at \n" + "'" + outputFolder + "\\" + laneChangeFileName + "'"); 
 			
-			// ensure that directories exist
-			checkDirectory(laneChangeFilePath);
-			
-			// write output data to given CSV file
-	        try (FileWriter fileWriter = new FileWriter(laneChangeFilePath)) {
-	        	
-	        	// create CSV writer
-	            CsvWriter csvWriter = CsvWriter.builder().build(fileWriter);
+			// go through all required row indexes
+			int maxLength = laneChangeIds.size();
+            for (int i = -1; i < maxLength; i++) {
+            	// create list of values for this row index
+            	List<String> rowValues = new ArrayList<String>();
+            	// headers
+            	if (i == -1) {
+	    			rowValues.add("time");
+            		rowValues.add("id");
+					rowValues.add("direction");
+	            	rowValues.add("link");
+	            	rowValues.add("from_lane");
+            	}
+            	// values
+            	else {
+	    			rowValues.add(laneChangeTime.get(i));
+	            	rowValues.add(laneChangeIds.get(i));
+					rowValues.add(laneChangeDirections.get(i));
+	            	rowValues.add(laneChangeLinks.get(i));
+	            	rowValues.add(laneChangeFromLanes.get(i));
+            	}
+				
+            	// write this row into CSV file
+	            laneChangeWriter.writeRecord(rowValues);
+            }
 	            
-				// go through all required row indexes
-				int maxLength = laneChangeIds.size();
-	            for (int i = -1; i < maxLength; i++) {
-	            	// create list of values for this row index
-	            	List<String> rowValues = new ArrayList<String>();
-	            	// headers
-	            	if (i == -1) {
-		    			rowValues.add("time");
-	            		rowValues.add("id");
-						rowValues.add("direction");
-		            	rowValues.add("link");
-		            	rowValues.add("from_lane");
-	            	}
-	            	// values
-	            	else {
-		    			rowValues.add(laneChangeTime.get(i));
-		            	rowValues.add(laneChangeIds.get(i));
-						rowValues.add(laneChangeDirections.get(i));
-		            	rowValues.add(laneChangeLinks.get(i));
-		            	rowValues.add(laneChangeFromLanes.get(i));
-	            	}
-					
-	            	// write this row into CSV file
-		            csvWriter.writeRecord(rowValues);
-	            }
-	            
-	            // user feedback
-	            System.out.println("Lane change CSV file created successfully.");
-	            
-	        } catch (IOException e) {
-				e.printStackTrace();
-			}
+            // user feedback
+            System.out.println("Lane change CSV file created successfully.");
 		}
 	}
 	

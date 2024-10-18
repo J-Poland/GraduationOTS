@@ -2,6 +2,8 @@ from ots_models.java_manager import JavaManager
 import pandas as pd
 import os
 import numpy as np
+import zipfile
+import io
 
 
 # OpenTrafficSim VehicleAutomationModel class.
@@ -84,7 +86,9 @@ class VehicleAutomationModel:
             # get current seed
             seed = self.seed
 
-            print(f'Input: demand={main_demand} and ramp_demand={ramp_demand}')
+            print(f'\nInput: demand={main_demand} and ramp_demand={ramp_demand}')
+            print(f'       level0={level0_fraction} level1={level1_fraction}, '
+                  f'level2={level2_fraction} , level3={level3_fraction}')
 
             # set input parameters
             input_parameters = [
@@ -97,11 +101,12 @@ class VehicleAutomationModel:
                 f'-level3Fraction={level3_fraction}',
                 f'-mainDemand={main_demand}',
                 f'-rampDemand={ramp_demand}',
-                rf'-inputValuesFilePath={output_path}\\inputValues.csv',
-                rf'-singleOutputFilePath={output_path}\\singleOutputData.csv',
-                rf'-intermediateMeanValuesFilePath={output_path}\\intermediateOutputData.csv',
-                rf'-sequenceOutputFilePath={output_path}\\sequenceOutputData.csv',
-                rf'-laneChangeOutputFilePath={output_path}\\laneChangeOutputData.csv'
+                rf'-outputFolderPath={output_path}',
+                rf'-inputValuesFileName=inputValues.csv',
+                rf'-singleOutputFileName=singleOutputData.csv',
+                rf'-intermediateMeanValuesFileName=intermediateOutputData.csv',
+                rf'-sequenceOutputFileName=sequenceOutputData.csv',
+                rf'-laneChangeOutputFileName=laneChangeOutputData.csv'
             ]
 
             # compile and run Java file
@@ -116,19 +121,14 @@ class VehicleAutomationModel:
             print("Seed is None, so simulation cannot run.")
 
     # function to load simulation output
-    def load_simulation_output(self, output_folder_path, output_file_name, detailed_output_file_name=None,
-                               experiment_results_folder=None):
-        # load single (non-sequential) output data
-        df_output = pd.read_csv(os.path.join(output_folder_path, output_file_name))
-
-        # only save detailed/sequential output when required paths are provided
-        if (detailed_output_file_name is not None) and (experiment_results_folder is not None) and \
-           (self.replication_count is not None):
-            # load detailed output data
-            df_detailed_output = pd.read_csv(os.path.join(output_folder_path, detailed_output_file_name))
-            # save detailed output data
-            detailed_csv_name = f'detailed_output_{self.experiment_name}_rep{self.replication_count}.csv'
-            df_detailed_output.to_csv(os.path.join(experiment_results_folder, detailed_csv_name))
+    def load_simulation_output(self, output_folder_path, output_file_name):
+        # get zipped folder (remove .csv from output file name, it is saved as a .zip file)
+        zip_path = os.path.join(output_folder_path, fr'{output_file_name[:-4]}.zip')
+        # open zip file with output data
+        with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+            # load single (non-sequential) output data
+            with zip_ref.open(output_file_name) as data_file:
+                df_output = pd.read_csv(data_file)
 
         # create dictionary for output variables
         output_dict = {}

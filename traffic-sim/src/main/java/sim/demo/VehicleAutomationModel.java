@@ -254,11 +254,12 @@ public class VehicleAutomationModel extends AbstractOtsModel implements EventLis
 	static boolean additionalIncentives;
 	
 	/** File path for output data. */
-	static String inputValuesFilePath;
-	static String singleOutputFilePath;
-	static String intermediateMeanValuesFilePath;
-	static String sequenceOutputFilePath;
-	static String laneChangeOutputFilePath;
+	static String outputFolderPath;
+	static String inputValuesFileName;
+	static String singleOutputFileName;
+	static String intermediateMeanValuesFileName;
+	static String sequenceOutputFileName;
+	static String laneChangeOutputFileName;
 	
 
 	/**
@@ -295,11 +296,12 @@ public class VehicleAutomationModel extends AbstractOtsModel implements EventLis
 		additionalIncentives = simConfig.getAdditionalIncentives();
 		
 		// file save locations
-		inputValuesFilePath = simConfig.getInputValuesFilePath();
-		singleOutputFilePath = simConfig.getSingleOutputFilePath();
-		intermediateMeanValuesFilePath = simConfig.getIntermediateMeanValuesFilePath();
-		sequenceOutputFilePath = simConfig.getSequenceOutputFilePath();
-		laneChangeOutputFilePath = simConfig.getlaneChangeOutputFilePath();
+		outputFolderPath = simConfig.getOutputFolderPath();
+		inputValuesFileName = simConfig.getInputValuesFileName();
+		singleOutputFileName = simConfig.getSingleOutputFileName();
+		intermediateMeanValuesFileName = simConfig.getIntermediateMeanValuesFileName();
+		sequenceOutputFileName = simConfig.getSequenceOutputFileName();
+		laneChangeOutputFileName = simConfig.getlaneChangeOutputFileName();
 	}
 	
 	/**
@@ -319,7 +321,7 @@ public class VehicleAutomationModel extends AbstractOtsModel implements EventLis
 		outputDataManager.saveInputValue("additional_incentives", Boolean.toString(simConfig.getAdditionalIncentives()));
 		
 		// export these parameters to a CSV
-		outputDataManager.exportInputValues(inputValuesFilePath);
+		outputDataManager.exportInputValues(inputValuesFileName);
 	}
 
 	/**
@@ -343,7 +345,7 @@ public class VehicleAutomationModel extends AbstractOtsModel implements EventLis
 			setSimParameters();
 			
 			// create output manager and save input parameters
-			outputDataManager = new OutputDataManager(sequenceOutputFilePath);
+			outputDataManager = new OutputDataManager(outputFolderPath, sequenceOutputFileName);
 			saveInputParameters();
 			
 			// create generators
@@ -405,15 +407,13 @@ public class VehicleAutomationModel extends AbstractOtsModel implements EventLis
 			outputDataManager.addSequenceData(observedGtuData);
 		}
 		
-		// recalculate FD values or stop sampler lane data recording if simulation is finished
+		// recalculate FD values and stop sampler lane data recording if simulation is finished
 		// this is necessary to make the last FD calculation reproducible
         double currentTime = this.simulator.getSimulatorAbsTime().si;
         double nextCalculationTime = currentTime + sampleInterval.si;
         if (nextCalculationTime > simTime.si) {
-        	stopLaneRecording();
-        }
-        else {
         	recalculateFdValues();
+        	stopLaneRecording();
         }
 		
 		// reschedule this method for next GTU sample
@@ -459,7 +459,7 @@ public class VehicleAutomationModel extends AbstractOtsModel implements EventLis
 			
 			saveFdValues();
 			
-			outputDataManager.finalExportToCsv(inputValuesFilePath, singleOutputFilePath, laneChangeOutputFilePath);
+			outputDataManager.finalExportToCsv();
 		}
 		
 		// handle simulation time changed event
@@ -1021,15 +1021,8 @@ public class VehicleAutomationModel extends AbstractOtsModel implements EventLis
     	
     	calculations += 1;
     	
-    	// recalculate values for whole network
+    	// recalculate FD values
         this.source.recalculate(this.simulator.getSimulatorAbsTime());
-        
-        //recalculate values for lane specific sources
-        for (String laneString : this.individualSources.keySet()) {
-        	// get source for this lane
-        	FdSource laneSource = this.individualSources.get(laneString);
-        	laneSource.recalculate(this.simulator.getSimulatorAbsTime());
-        }
     }
     
     /*
@@ -1106,12 +1099,31 @@ public class VehicleAutomationModel extends AbstractOtsModel implements EventLis
         
         
         /** Constructor */
-        public OutputDataManager(String sequenceFilePath) {
+        public OutputDataManager(String outputFolderPath, String sequenceFileName) {
         	// create export object and perform export functions
-        	exporter = new ExportSimulationOutput();
+        	exporter = new ExportSimulationOutput(outputFolderPath, inputValuesFileName, sequenceFileName, singleOutputFileName,
+        										  intermediateMeanValuesFileName, laneChangeOutputFileName);
+        }
+        
+        
+        /** Export output data at end of simulation. */
+        public void finalExportToCsv() {
         	
-        	// create sequence output file, so that data can be added throughout the simulation
-        	exporter.initializeSequenceFile(sequenceFilePath);
+        	// calculate mean values for the variables stored in the meanMap and save them as single output (not sequence)
+        	calculateAndSaveMeans();
+        	
+        	// perform export of mean, intermediate mean, and lane change data
+        	try {
+	        	exporter.exportSingleToCsv(singleOutputMap, singleOutputFileName);
+	        	exporter.exportIntermediateMeanValuesToCsv(meanMap , intermediateMeanValuesFileName);
+	        	exporter.exportLaneChangesToCsv(laneChangeTime, laneChangeIds, laneChangeDirections,
+	        									laneChangeLinks, laneChangeFromLanes, laneChangeOutputFileName);
+        	} catch (NullPointerException e) {
+        		e.printStackTrace();
+        	}
+        	
+        	// sequence data is already saved during the simulation
+        	// output streams are closed when program shuts down, see ExportSimulationOutput class
         }
         
         /** Function to retrieve Map of single output data. */
@@ -1124,6 +1136,7 @@ public class VehicleAutomationModel extends AbstractOtsModel implements EventLis
         	return meanMap;
         }
         
+        /** Function to write headers for the sequence data file. */
         public void createSequenceHeaders(Map<String, String> dataRow) {
         	ArrayList<String> headers = new ArrayList<String>();
         	
@@ -1136,34 +1149,10 @@ public class VehicleAutomationModel extends AbstractOtsModel implements EventLis
         	exporter.writeSequenceDataHeaders(headers);
         }
         
-        /** Function to save sequence data. */
+        /** Function to save a sequence data row. */
         public void addSequenceData(Map<String, String> dataRow) {
-//            GtuSequenceData gtuData = sequenceOutputMap.getOrDefault(gtuId, new GtuSequenceData());
-//            gtuData.addDataPoint(time, variable, value);
-//            sequenceOutputMap.put(gtuId, gtuData);
-        	
         	// write new dataRow to file
         	exporter.writeSequenceDataRow(dataRow);
-        }
-        
-        /** Export output data at end of simulation. */
-        public void finalExportToCsv(String inputFilePath, String singleFilePath, String laneChangeFilePath) {
-        	
-        	// calculate mean values for the variables stored in the meanMap and save them as single output (not sequence)
-        	calculateAndSaveMeans();
-        	
-        	// perform export
-        	ExportSimulationOutput exporter = new ExportSimulationOutput();
-        	exporter.exportSingleToCsv(singleOutputMap, singleFilePath);
-        	exporter.exportIntermediateMeanValuesToCsv(meanMap , intermediateMeanValuesFilePath);
-        	exporter.exportLaneChangesToCsv(laneChangeTime, laneChangeIds, laneChangeDirections,
-        									laneChangeLinks, laneChangeFromLanes, laneChangeFilePath);
-        	
-//        	// temp printing values
-//        	System.out.println("");
-//        	for (String key : singleOutputMap.keySet()) {
-//        		System.out.println(key + ": " + singleOutputMap.get(key));
-//        	}
         }
         
         /** Save input parameter values */
@@ -1298,51 +1287,9 @@ public class VehicleAutomationModel extends AbstractOtsModel implements EventLis
         	laneChangeLinks.add(gtuLink);
         	laneChangeFromLanes.add(gtuFromLane);
         }
-        
-        
-        /** Classes to create a storage structure to save sequence data with gtuId and simulation time */
-        public class GtuSequenceData {
-        	// Map with simulation time as key and {variable, values} as value
-            private Map<Double, DataPoint> dataPoints;
-
-            public GtuSequenceData() {
-                this.dataPoints = new LinkedHashMap<>();
-            }
-
-            public void addDataPoint(double time, String variable, Object value) {
-                DataPoint dataPoint = dataPoints.getOrDefault(time, new DataPoint(time));
-                dataPoint.addValue(variable, value);
-                dataPoints.put(time, dataPoint);
-            }
-
-            public Collection<DataPoint> getDataPoints() {
-                return dataPoints.values();
-            }
-        }
-        
-        public class DataPoint {
-            private double time;
-            private Map<String, Object> values;
-
-            public DataPoint(double time) {
-                this.time = time;
-                this.values = new LinkedHashMap<>();
-            }
-
-            public double getSimulationTime() {
-                return time;
-            }
-
-            public Map<String, Object> getValues() {
-                return values;
-            }
-
-            public void addValue(String key, Object value) {
-                this.values.put(key, value);
-            }
-        }
-        
+       
     }
+    
     
     /** Class for headway info */
     private class HeadwayInfo {
@@ -1385,7 +1332,7 @@ public class VehicleAutomationModel extends AbstractOtsModel implements EventLis
 			            this.headwayTime = hwt;
 			            // calculate time-to-collision (relative)
 			            if (speed > leaderSpeed) {
-			            	double ttc = hwt / (speed - leaderSpeed);
+			            	double ttc = distance / (speed - leaderSpeed);
 			            	this.timeToCollision = ttc;
 			            	// determine whether ttc is critical
 				            if (reactionTime != null) {

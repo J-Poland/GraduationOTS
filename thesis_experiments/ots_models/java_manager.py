@@ -2,6 +2,8 @@
 import os
 import glob
 import subprocess
+import signal
+import sys
 
 
 # Class to manage compilation and running of Java file
@@ -85,18 +87,24 @@ class JavaManager:
 
             # run the compiled Java class
             self.print_feedback("Running Java program...")
-            run_result = subprocess.run([java_runtime, "-cp", self.classpath + ";.",
-                                         self.java_class_name] + self.java_parameters,
-                                        capture_output=True, text=True)
+            run = subprocess.Popen([java_runtime, "-cp", self.classpath + ";.",
+                                    self.java_class_name] + self.java_parameters,
+                                   stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
 
-            if run_result.returncode != 0:
+            # wait until run is completed and receive Java console output and errors
+            stdout, stderr = run.communicate()
+
+            # show console output
+            if run.returncode != 0:
                 self.print_feedback('Execution failed:', True)
-                self.print_feedback(run_result.stdout)
-                self.print_feedback(run_result.stderr, True)
+                self.print_feedback(stdout)
+                self.print_feedback(stderr, True)
             else:
                 self.print_feedback('Execution successful.')
                 self.print_feedback('\nConsole output:')
-                self.print_feedback(run_result.stdout)
-                self.print_feedback(run_result.stderr)
+                self.print_feedback(stdout)
+                self.print_feedback(stderr)
         else:
             self.print_feedback('Java project has to be compiled first.', True)
+
+
