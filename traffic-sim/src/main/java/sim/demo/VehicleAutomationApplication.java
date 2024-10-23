@@ -101,9 +101,9 @@ public class VehicleAutomationApplication extends OtsSimulationApplication<Vehic
 		
 		// define cross section to base FD values on
         List<String> names = new ArrayList<>();
-        names.add("FORWARD1");
-        names.add("FORWARD2");
-        Length lanePosition = Length.instantiateSI(0.0);	// link CD has a length of 1895 (1100 - 2000)
+        names.add("LEFT");
+        names.add("RIGHT");
+        Length lanePosition = Length.instantiateSI(0.0);	// link CD has a length of 875 m (1125 - 2000)
         LinkPosition linkPosition = new LinkPosition(getModel().getNetwork().getLink("CD"), lanePosition);
         GraphCrossSection<LaneDataRoad> crossSection;
         try
@@ -135,7 +135,7 @@ public class VehicleAutomationApplication extends OtsSimulationApplication<Vehic
 	 */
 	public static void demo(final boolean exitOnClose, final VehicleAutomationModelParameters simConfig) {
 		try {
-			OtsAnimator simulator = new OtsAnimator("ShortMerge");
+			OtsAnimator simulator = new OtsAnimator("VehicleAutomation");
 			final VehicleAutomationModel otsModel = new VehicleAutomationModel(simulator, simConfig);
 			simulator.initialize(Time.ZERO, Duration.ZERO, Duration.instantiateSI(simConfig.getSimTime()), otsModel);
 			OtsAnimationPanel animationPanel = new OtsAnimationPanel(otsModel.getNetwork().getExtent(),

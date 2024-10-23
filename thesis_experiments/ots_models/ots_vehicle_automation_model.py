@@ -72,15 +72,15 @@ class VehicleAutomationModel:
         self.original_os_dir = self.java_file.original_os_dir
 
     # function to start the simulation's Java model
-    def run_simulation(self, sim_time, level0_fraction, level1_fraction, level2_fraction, level3_fraction,
-                       main_demand, ramp_demand):
+    def run_simulation(self, warm_up_time, sample_time,
+                       level0_fraction, level1_fraction, level2_fraction, level3_fraction,
+                       main_demand, ramp_demand, in_vehicle_distraction, road_side_distraction):
         # only run simulation when seed is known
         if self.seed is not None:
             # get output folder for this run
             output_path = self.output_folder
 
             # run simulation headless (headless = 'true') or with animation window (headless = 'false')
-            # TODO: with animation is still subject to errors, why?
             run_headless = 'true'
 
             # get current seed
@@ -94,13 +94,16 @@ class VehicleAutomationModel:
             input_parameters = [
                 f'-headless={run_headless}',
                 f'-seed={seed}',
-                f'-simTime={sim_time}',
+                f'-warmUpTime={warm_up_time}',
+                f'-sampleTime={sample_time}',
                 f'-level0Fraction={level0_fraction}',
                 f'-level1Fraction={level1_fraction}',
                 f'-level2Fraction={level2_fraction}',
                 f'-level3Fraction={level3_fraction}',
                 f'-mainDemand={main_demand}',
                 f'-rampDemand={ramp_demand}',
+                f'-inVehicleDistraction={in_vehicle_distraction}',
+                f'-roadSideDistraction={road_side_distraction}',
                 rf'-outputFolderPath={output_path}',
                 rf'-inputValuesFileName=inputValues.csv',
                 rf'-singleOutputFileName=singleOutputData.csv',
@@ -162,19 +165,23 @@ class VehicleAutomationModel:
         self.generate_output_folder()
 
         # unpack experiment details
-        sim_time = kwargs['sim_time']
+        warm_up_time = kwargs['warm_up_time']
+        sample_time = kwargs['sample_time']
         level0_fraction = kwargs['level0_fraction']
         level1_fraction = kwargs['level1_fraction']
         level2_fraction = kwargs['level2_fraction']
         level3_fraction = kwargs['level3_fraction']
         main_demand = kwargs['main_demand']
         ramp_demand = kwargs['ramp_demand']
+        in_vehicle_distraction = kwargs['in_vehicle_distraction']
+        road_side_distraction = kwargs['road_side_distraction']
 
         # run model (also receive fixed corresponding output path,
         #            self. reference could be changed by parallel running simulations)
-        this_output_folder = self.run_simulation(sim_time, level0_fraction, level1_fraction,
+        this_output_folder = self.run_simulation(warm_up_time, sample_time, level0_fraction, level1_fraction,
                                                  level2_fraction, level3_fraction,
-                                                 main_demand, ramp_demand)
+                                                 main_demand, ramp_demand,
+                                                 in_vehicle_distraction, road_side_distraction)
 
         # retrieve output data
         output = self.load_simulation_output(this_output_folder, self.output_file_name)

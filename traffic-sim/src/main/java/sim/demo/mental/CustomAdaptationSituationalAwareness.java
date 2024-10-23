@@ -14,6 +14,8 @@ import org.opentrafficsim.road.gtu.lane.perception.mental.AdaptationSituationalA
 import org.opentrafficsim.road.gtu.lane.perception.mental.Fuller;
 import org.opentrafficsim.road.gtu.lane.perception.mental.Fuller.BehavioralAdaptation;
 
+import sim.demo.VehicleConfigurations;
+
 /**
  * Behavioral adaptation which sets parameters for situational awareness and reaction time.
  * 
@@ -35,47 +37,6 @@ import org.opentrafficsim.road.gtu.lane.perception.mental.Fuller.BehavioralAdapt
 public class CustomAdaptationSituationalAwareness extends AdaptationSituationalAwareness
 {
 
-    /** Situational awareness. */
-    public static final ParameterTypeDouble SA = new ParameterTypeDouble("SA", "Situational awareness", 1.0, POSITIVEZERO);
-
-    /** Minimum situational awareness. */
-    public static final ParameterTypeDouble SA_MIN =
-            new ParameterTypeDouble("SAmin", "Min. situational awareness", 0.5, POSITIVE)
-            {
-                /** */
-                private static final long serialVersionUID = 20180403L;
-
-                /** {@inheritDoc} */
-                @Override
-                public void check(final Double value, final Parameters params) throws ParameterException
-                {
-                    Double saMax = params.getParameterOrNull(SA_MAX);
-                    Throw.when(saMax != null && value > saMax, ParameterException.class,
-                            "Value for SA_MIN should not be larger than SA_MAX.");
-                }
-            };
-
-    /** Maximum situational awareness. */
-    public static final ParameterTypeDouble SA_MAX =
-	        new ParameterTypeDouble("SAmax", "Max. situational awareness", 1.0, POSITIVE)
-	        {
-	            /** */
-	            private static final long serialVersionUID = 20180403L;
-	
-	            /** {@inheritDoc} */
-	            @Override
-	            public void check(final Double value, final Parameters params) throws ParameterException
-	            {
-	                Double saMin = params.getParameterOrNull(SA_MIN);
-	                Throw.when(saMin != null && value < saMin, ParameterException.class,
-	                        "Value for SA_MAX should not be larger than SA_MIN.");
-	            }
-	        };
-
-    /** Maximum reaction time at 0 situational awareness. */
-    public static final ParameterTypeDuration TR_MAX =
-            new ParameterTypeDuration("TRmax", "Maximum reaction time", Duration.instantiateSI(2.0), POSITIVE);
-
     /** {@inheritDoc} */
     @Override
     public void adapt(final Parameters parameters, final double taskSaturation) throws ParameterException
@@ -87,11 +48,29 @@ public class CustomAdaptationSituationalAwareness extends AdaptationSituationalA
         double saMax = parameters.getParameter(SA_MAX);
         double sa = taskSaturation < tsCrit ? saMax
                 : (taskSaturation >= tsMax ? saMin : saMax - (saMax - saMin) * (taskSaturation - tsCrit) / (tsMax - tsCrit));
+        
+        // new situational awareness
         parameters.setParameter(SA, sa);
-        // reaction time
-//        System.out.println("Get TR: " + parameters.getParameter(ParameterTypes.TR));
-//        System.out.println("Set TR: " + parameters.getParameter(TR_MAX).times(saMax - sa) + " for ts: " + taskSaturation);
-        parameters.setParameter(ParameterTypes.TR, parameters.getParameter(TR_MAX).times(saMax - sa));
+        // new reaction time
+        double newTr = calculateTr(parameters, sa, saMin, saMax);
+        parameters.setParameter(ParameterTypes.TR, Duration.instantiateSI(newTr));
+    }
+    
+    private double calculateTr(Parameters parameters, double sa, double saMin, double saMax) throws ParameterException {
+    	// get reaction time range
+    	double trMax = parameters.getParameter(VehicleConfigurations.MAX_TR).si;
+    	double trMin = parameters.getParameter(VehicleConfigurations.MIN_TR).si;
+    	
+    	// adapt reaction time only if minimum reaction time is lower than the maximum reaction time
+    	if (trMin < trMax) {
+    		// map sa range to tr
+    		double newTr = trMin + ((sa - saMin) / (saMax - saMin)) * (trMax - trMin);
+    		return newTr;
+    	}
+    	// otherwise return the max reaction time
+    	else {
+    		return trMax;
+    	}
     }
 
 }

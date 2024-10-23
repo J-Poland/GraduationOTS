@@ -283,8 +283,8 @@ public class ExportSimulationOutput
     	
     }
 	
-	public void exportLaneChangesToCsv(ArrayList<String> laneChangeTime, ArrayList<String> laneChangeIds, ArrayList<String> laneChangeDirections,
-			ArrayList<String> laneChangeLinks, ArrayList<String> laneChangeFromLanes, String laneChangeFileName) {
+	public void exportLaneChangesToCsv(ArrayList<String> laneChangeTime, ArrayList<String> laneChangeIds, ArrayList<String> laneChangeTypes, 
+			ArrayList<String> laneChangeDirections, ArrayList<String> laneChangeLinks, ArrayList<String> laneChangeFromLanes, String laneChangeFileName) {
 		// only continue when output data is available
 		if (!laneChangeIds.isEmpty()) {
 			
@@ -300,6 +300,7 @@ public class ExportSimulationOutput
             	if (i == -1) {
 	    			rowValues.add("time");
             		rowValues.add("id");
+            		rowValues.add("type");
 					rowValues.add("direction");
 	            	rowValues.add("link");
 	            	rowValues.add("from_lane");
@@ -308,6 +309,7 @@ public class ExportSimulationOutput
             	else {
 	    			rowValues.add(laneChangeTime.get(i));
 	            	rowValues.add(laneChangeIds.get(i));
+	            	rowValues.add(laneChangeTypes.get(i));
 					rowValues.add(laneChangeDirections.get(i));
 	            	rowValues.add(laneChangeLinks.get(i));
 	            	rowValues.add(laneChangeFromLanes.get(i));

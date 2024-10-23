@@ -21,6 +21,7 @@ import org.opentrafficsim.base.parameters.ParameterException;
 import org.opentrafficsim.base.parameters.ParameterTypeAcceleration;
 import org.opentrafficsim.base.parameters.ParameterTypeDouble;
 import org.opentrafficsim.base.parameters.ParameterTypeDuration;
+import org.opentrafficsim.base.parameters.ParameterTypeString;
 import org.opentrafficsim.base.parameters.ParameterTypes;
 import org.opentrafficsim.base.parameters.Parameters;
 import org.opentrafficsim.core.definitions.Defaults;
@@ -39,7 +40,7 @@ import org.opentrafficsim.road.gtu.lane.tactical.util.lmrs.Tailgating;
 
 import nl.tudelft.simulation.jstats.distributions.DistTriangular;
 import nl.tudelft.simulation.jstats.streams.StreamInterface;
-import sim.demo.mental.CarFollowingTask;
+import sim.demo.mental.TaskCarFollowing;
 import sim.demo.mental.CustomAdaptationHeadway;
 import sim.demo.mental.CustomAdaptationSituationalAwareness;
 import sim.demo.mental.TaskManagerAr;
@@ -50,7 +51,14 @@ import sim.demo.mental.TaskManagerAr;
 public class VehicleConfigurations extends Defaults implements BiFunction<GtuType, StreamInterface, GtuTemplate> {
 	
 	// new parameters
-    public static final ParameterTypeDuration INITIAL_TMIN = new ParameterTypeDuration("INITIAL_TMIN", "Initial minimal headway time");
+	public static final ParameterTypeString AUTOMATION_LEVEL = new ParameterTypeString("AUTOMATION_LEVEL", "Automation level of vehicle.");
+    public static final ParameterTypeDuration INITIAL_TMIN = new ParameterTypeDuration("INITIAL_TMIN", "Initial minimal headway time.");
+    public static final ParameterTypeDuration MAX_TR = new ParameterTypeDuration("MAX_TR", "Custom parameter for maximum reaction time.");
+    public static final ParameterTypeDuration MIN_TR = new ParameterTypeDuration("MIN_TR", "Custom parameter for minimum reaction time.");
+    public static final ParameterTypeDouble CF_TASK_DEMAND = new ParameterTypeDouble("CF_TASK_DEMAND", "Car-following cognitive task demand.");
+    public static final ParameterTypeDouble LC_TASK_DEMAND = new ParameterTypeDouble("LC_TASK_DEMAND", "Lane-chaning cognitive task demand.");
+    public static final ParameterTypeDouble SECONDARY_TASK_DEMAND = new ParameterTypeDouble("SECONDARY_TASK_DEMAND", "Secondary task demand.");
+    public static final ParameterTypeDouble ROAD_SIDE_DISTRACTION_DEMAND = new ParameterTypeDouble("ROAD_SIDE_DISTRACTION_DEMAND", "Road side distraction demand.");
 	    
     // drawing colors for GTU types
     public static final ImmutableMap<GtuType, Color> GTU_TYPE_COLORS;
@@ -138,6 +146,35 @@ public class VehicleConfigurations extends Defaults implements BiFunction<GtuTyp
 		ParameterFactoryByType paramFactory = new ParameterFactoryByType();
 		
 		// define fixed parameters (not drawn from distribution)
+		// automation levels
+		String[] automationLevels = {
+				"LEVEL0",
+				"LEVEL1",
+				"LEVEL2",
+				"LEVEL3"};
+		
+		// GTU acceleration
+		Acceleration[] maxAccValues = {
+				Acceleration.instantiateSI(1.25),
+				Acceleration.instantiateSI(1.17),
+				Acceleration.instantiateSI(1.17),
+				Acceleration.instantiateSI(1.17)};
+		Acceleration[] maxComfDecValues = {
+				Acceleration.instantiateSI(2.09),
+				Acceleration.instantiateSI(1.95),
+				Acceleration.instantiateSI(1.95),
+				Acceleration.instantiateSI(1.95)};
+		Acceleration[] maxCritDecValues = {
+				Acceleration.instantiateSI(3.5),
+				Acceleration.instantiateSI(3.5),
+				Acceleration.instantiateSI(3.5),
+				Acceleration.instantiateSI(3.5)};
+		Acceleration[] maxAdjDecValues = {
+				Acceleration.instantiateSI(0.5),
+				Acceleration.instantiateSI(0.5),
+				Acceleration.instantiateSI(0.5),
+				Acceleration.instantiateSI(0.5)};
+		
 		// GTU headway
 		Duration[] tMinValues = {
 				Duration.instantiateSI(0.6),
@@ -162,20 +199,30 @@ public class VehicleConfigurations extends Defaults implements BiFunction<GtuTyp
 				Length.instantiateSI(50.0),
 				Length.instantiateSI(100.0)};
 		
+		
 		// loop through automation GTU types to set their parameters
 		for (int i = 0; i < automationGtuTypes.size(); i++) {
 			
 			// get current gtuType
 			GtuType gtuType = automationGtuTypes.get(i);
 			
+			// automation level
+			paramFactory.addParameter(gtuType, AUTOMATION_LEVEL, automationLevels[i]);
 			// speed adherence factor
 			paramFactory.addParameter(gtuType, ParameterTypes.FSPEED, ParameterTypes.FSPEED.getDefaultValue());
+			// acceleration
+			paramFactory.addParameter(gtuType, ParameterTypes.A, maxAccValues[i]);
+			paramFactory.addParameter(gtuType, ParameterTypes.B, maxComfDecValues[i]);
+			paramFactory.addParameter(gtuType, ParameterTypes.BCRIT, maxCritDecValues[i]);
+			paramFactory.addParameter(gtuType, ParameterTypes.B0, maxAdjDecValues[i]);
 			// headway
 			paramFactory.addParameter(gtuType, ParameterTypes.TMAX, tMaxValues[i]);
 			paramFactory.addParameter(gtuType, ParameterTypes.TMIN, tMinValues[i]);
 			paramFactory.addParameter(gtuType, INITIAL_TMIN, tMinValues[i]);
 			// reaction time (and simulation steps)
 			paramFactory.addParameter(gtuType, ParameterTypes.TR, ParameterTypes.TR.getDefaultValue());
+			paramFactory.addParameter(gtuType, MAX_TR, Duration.instantiateSI(2.0));
+			paramFactory.addParameter(gtuType, MIN_TR, Duration.instantiateSI(0.5));
 			paramFactory.addParameter(gtuType, ParameterTypes.DT, ParameterTypes.DT.getDefaultValue());
 			// lookahead and lookback
 			paramFactory.addParameter(gtuType, ParameterTypes.LOOKAHEAD, lookAheadValues[i]);
@@ -196,7 +243,15 @@ public class VehicleConfigurations extends Defaults implements BiFunction<GtuTyp
 			// tasks
 			paramFactory.addParameter(gtuType, TaskManagerAr.ALPHA, TaskManagerAr.ALPHA.getDefaultValue());
 			paramFactory.addParameter(gtuType, TaskManagerAr.BETA, TaskManagerAr.BETA.getDefaultValue());
-			paramFactory.addParameter(gtuType, CarFollowingTask.HEXP, CarFollowingTask.HEXP.getDefaultValue());
+			paramFactory.addParameter(gtuType, TaskCarFollowing.HEXP, TaskCarFollowing.HEXP.getDefaultValue());
+			// car-following task demand
+			paramFactory.addParameter(gtuType, CF_TASK_DEMAND, 0.0);
+			// lane-changing task demand
+			paramFactory.addParameter(gtuType, LC_TASK_DEMAND, 0.0);
+			// in-vehicle distraction demand
+			paramFactory.addParameter(gtuType, SECONDARY_TASK_DEMAND, 0.0);
+			// road side distraction demand
+			paramFactory.addParameter(gtuType, ROAD_SIDE_DISTRACTION_DEMAND, 0.0);
 		}
 		
 		// return encapsulated vehicle types
@@ -206,7 +261,10 @@ public class VehicleConfigurations extends Defaults implements BiFunction<GtuTyp
 	/** Method to draw GTU parameters from distributions.
 	 * @throws ParameterException
 	 */
-	public Parameters drawDistributionParameters(StreamInterface stream, GtuType gtuType, Parameters gtuParameters) throws ParameterException {
+	public Parameters drawDistributionParameters(StreamInterface stream, String gtuType, Parameters gtuParameters) throws ParameterException {
+		// determine automation level index by GTU type string
+		int typeIndex = gtuType.contains("LEVEL0") ? 0 : gtuType.contains("LEVEL1") ? 1 : gtuType.contains("LEVEL2") ? 2 : gtuType.contains("LEVEL3") ? 3 : -1;
+		
 		// define specific type parameters { level0, level1, level2, level3 }
 		// GTU speed adherence factor
 		DistTriangular[] fSpeedValues = {
@@ -216,36 +274,44 @@ public class VehicleConfigurations extends Defaults implements BiFunction<GtuTyp
 				new DistTriangular(stream, 0.98, 1.0, 1.02)};
 		
 		// reaction time
-		DistTriangular[] trValues = {
-				new DistTriangular(stream, 0.8, 0.9, 1.0),
-				new DistTriangular(stream, 0.1, 0.15, 0.2),
+		DistTriangular[] maxTrValues = {
+				new DistTriangular(stream, 1.0, 1.25, 1.5),
+				new DistTriangular(stream, 0.1, 0.14, 0.18),
 				new DistTriangular(stream, 0.1, 0.12, 0.14),
-				new DistTriangular(stream, 0.05, 0.075, 0.1)};
+				new DistTriangular(stream, 0.1, 0.11, 0.12)};
+		DistTriangular minHumanTr = new DistTriangular(stream, 0.5, 0.6, 0.7);
 		
-		// social
-		DistTriangular[] socioValues = {
-				new DistTriangular(stream, 0.4, 0.5, 0.6),
-				new DistTriangular(stream, 0.45, 0.55, 0.65),
-				new DistTriangular(stream, 0.50, 0.60, 0.70),
-				new DistTriangular(stream, 0.55, 0.65, 0.75)};
-		DistTriangular[] rhoValues = {
-				new DistTriangular(stream, 0.5, 0.6, 0.7),
-				new DistTriangular(stream, 0.5, 0.6, 0.7),
-				new DistTriangular(stream, 0.5, 0.6, 0.7),
-				new DistTriangular(stream, 0.5, 0.6, 0.7)};
+		// social (rho values are set dynamically in tailgating class)
+		DistTriangular humanSocioValues = new DistTriangular(stream, 0.25, 0.5, 0.75);
+		DistTriangular automatedSocioValues = new DistTriangular(stream, 0.0, 0.1, 0.2);
+				
 		
 		
 		// select parameter index by automation type
-		int typeIndex = automationGtuTypes.indexOf(gtuType);
 		if (typeIndex == -1) {
-			CategoryLogger.always().error("GTU automation type is not found. Parameters cannot be adjusted according to automation types.");
+			CategoryLogger.always().error("GTU automation type is not found. Parameters cannot be adjusted to match automation types.");
 		}
 		else {
 			// set parameters for this GTU type
 			gtuParameters.setParameter(ParameterTypes.FSPEED, fSpeedValues[typeIndex].draw());
-			gtuParameters.setParameter(ParameterTypes.TR, Duration.instantiateSI(trValues[typeIndex].draw()));
-			gtuParameters.setParameter(LmrsParameters.SOCIO, socioValues[typeIndex].draw());
-			gtuParameters.setParameter(Tailgating.RHO, rhoValues[typeIndex].draw());
+			gtuParameters.setParameter(ParameterTypes.TR, Duration.instantiateSI(maxTrValues[typeIndex].draw()));
+			
+			double maxTr = maxTrValues[typeIndex].draw();
+			gtuParameters.setParameter(MAX_TR, Duration.instantiateSI(maxTr));
+			
+			// set human minimum specific values
+			if (gtuParameters.getParameter(AUTOMATION_LEVEL).contains("LEVEL0")) {
+				gtuParameters.setParameter(MIN_TR, Duration.instantiateSI(minHumanTr.draw()));
+				gtuParameters.setParameter(LmrsParameters.SOCIO, humanSocioValues.draw());
+			}
+			
+			// set automated specific values
+			else {
+				// set automated reaction times equal to their maximum reaction time, SA does not influence this reaction time
+				gtuParameters.setParameter(MIN_TR, Duration.instantiateSI(maxTr));
+				gtuParameters.setParameter(LmrsParameters.SOCIO, automatedSocioValues.draw());
+			}
+			
 		}
 		
 		// return new parameter values

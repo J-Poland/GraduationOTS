@@ -54,7 +54,7 @@ public class VehicleAutomationHeadless extends AbstractOtsSimulationApplication
     {
         try
         {
-        	OtsSimulator simulator = new OtsSimulator("ShortMerge");
+        	OtsSimulator simulator = new OtsSimulator("VehicleAutomation");
             final VehicleAutomationModel otsModel = new VehicleAutomationModel(simulator, simConfig);
             simulator.initialize(Time.ZERO, Duration.ZERO, Duration.instantiateSI(simConfig.getSimTime()), otsModel);
             simulator.start();

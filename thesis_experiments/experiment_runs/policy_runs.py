@@ -37,10 +37,14 @@ class DualLogger:
 # function to create valid policies
 def define_policies():
     return [
-        Policy('Policy 1', **{'level0_fraction': 1.0, 'level1_fraction': 0, 'level2_fraction': 0, 'level3_fraction': 0}),
-        Policy('Policy 2', **{'level0_fraction': 0, 'level1_fraction': 1.0, 'level2_fraction': 0, 'level3_fraction': 0}),
-        Policy('Policy 3', **{'level0_fraction': 0, 'level1_fraction': 0, 'level2_fraction': 1.0, 'level3_fraction': 0}),
-        Policy('Policy 4', **{'level0_fraction': 0, 'level1_fraction': 0, 'level2_fraction': 0, 'level3_fraction': 1.0}),
+        Policy('Policy 1', **{'level0_fraction': 1.0, 'level1_fraction': 0, 'level2_fraction': 0, 'level3_fraction': 0,
+                              'in_vehicle_distraction': True, 'road_side_distraction': False}),
+        Policy('Policy 2', **{'level0_fraction': 0, 'level1_fraction': 1.0, 'level2_fraction': 0, 'level3_fraction': 0,
+                              'in_vehicle_distraction': True, 'road_side_distraction': False}),
+        Policy('Policy 3', **{'level0_fraction': 0, 'level1_fraction': 0, 'level2_fraction': 1.0, 'level3_fraction': 0,
+                              'in_vehicle_distraction': True, 'road_side_distraction': False}),
+        Policy('Policy 4', **{'level0_fraction': 0, 'level1_fraction': 0, 'level2_fraction': 0, 'level3_fraction': 1.0,
+                              'in_vehicle_distraction': True, 'road_side_distraction': False}),
     ]
 
 
@@ -70,7 +74,9 @@ def create_model(_seed):
     _policies = define_policies()
 
     # define model constants
-    _ema_model.constants = [Constant('sim_time', 600)]  # 28800 8 hours of traffic simulation, 1800 is 30 min
+    _ema_model.constants = [Constant('warm_up_time', 0),
+                            Constant('sample_time', 1200)
+                            ]  # 28800 = 8 hours of traffic simulation, 1800 = 30 min
 
     # define levers outside of policies
     _ema_model.levers = []
@@ -121,9 +127,9 @@ if __name__ == '__main__':
           f'Simulation of the {experiment_name} experiment has started.')
 
     # run experiments for multiple seeds
-    seeds = [0,]
+    seeds = [0, 1, 2, 3]
     # select scenarios per policy
-    num_scenarios = 40
+    num_scenarios = 10
     for seed in seeds:
         print('\n'
               f'{datetime.now().time().strftime("%H:%M:%S")}: '

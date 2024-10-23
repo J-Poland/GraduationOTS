@@ -11,6 +11,8 @@ import org.opentrafficsim.road.gtu.lane.perception.mental.AdaptationHeadway;
 import org.opentrafficsim.road.gtu.lane.perception.mental.Fuller;
 import org.opentrafficsim.road.gtu.lane.perception.mental.Fuller.BehavioralAdaptation;
 
+import sim.demo.VehicleConfigurations;
+
 /**
  * Behavioral adaptation which increases the desired headway to reduce task-demand.
  * <p>
@@ -23,11 +25,6 @@ import org.opentrafficsim.road.gtu.lane.perception.mental.Fuller.BehavioralAdapt
  */
 public class CustomAdaptationHeadway extends AdaptationHeadway
 {
-
-    /** Parameter for desired headway scaling. */
-    public static final ParameterTypeDouble BETA_T =
-            new ParameterTypeDouble("Beta_T", "max headway scaling", 1.0, POSITIVEZERO);
-
     /** Base value for the minimum desired headway. */
     private Duration t0Min;
 
@@ -38,26 +35,30 @@ public class CustomAdaptationHeadway extends AdaptationHeadway
     @Override
     public void adapt(final Parameters parameters, final double taskSaturation) throws ParameterException
     {
-        if (this.t0Min == null)
-        {
-            this.t0Min = parameters.getParameterOrNull(ParameterTypes.TMIN);
-            this.t0Max = parameters.getParameterOrNull(ParameterTypes.TMAX);
-        }
-        double eps = parameters.getParameter(Fuller.TS) - parameters.getParameter(Fuller.TS_CRIT);
-        eps = eps < 0.0 ? 0.0 : (eps > 1.0 ? 1.0 : eps);
-        double factor = 1.0 + parameters.getParameter(BETA_T) * eps;
-        Duration tMin = this.t0Min.times(factor);
-        Duration tMax = this.t0Max.times(factor);
-        if (tMax.si <= parameters.getParameter(ParameterTypes.TMIN).si)
-        {
-            parameters.setParameter(ParameterTypes.TMIN, tMin);
-            parameters.setParameter(ParameterTypes.TMAX, tMax);
-        }
-        else
-        {
-            parameters.setParameter(ParameterTypes.TMAX, tMax);
-            parameters.setParameter(ParameterTypes.TMIN, tMin);
-        }
+    	// only perform adaptation when the car-following task is not automated (thus level 0)
+    	if (parameters.getParameterOrNull(VehicleConfigurations.AUTOMATION_LEVEL).contains("LEVEL0")) {
+    		
+	        if (this.t0Min == null)
+	        {
+	            this.t0Min = parameters.getParameterOrNull(ParameterTypes.TMIN);
+	            this.t0Max = parameters.getParameterOrNull(ParameterTypes.TMAX);
+	        }
+	        double eps = parameters.getParameter(Fuller.TS) - parameters.getParameter(Fuller.TS_CRIT);
+	        eps = eps < 0.0 ? 0.0 : (eps > 1.0 ? 1.0 : eps);
+	        double factor = 1.0 + parameters.getParameter(BETA_T) * eps;
+	        Duration tMin = this.t0Min.times(factor);
+	        Duration tMax = this.t0Max.times(factor);
+	        if (tMax.si <= parameters.getParameter(ParameterTypes.TMIN).si)
+	        {
+	            parameters.setParameter(ParameterTypes.TMIN, tMin);
+	            parameters.setParameter(ParameterTypes.TMAX, tMax);
+	        }
+	        else
+	        {
+	            parameters.setParameter(ParameterTypes.TMAX, tMax);
+	            parameters.setParameter(ParameterTypes.TMIN, tMin);
+	        }
+    	}
     }
 
 }

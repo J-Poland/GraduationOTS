@@ -9,14 +9,17 @@ public class VehicleAutomationModelParameters
 	// simulation parameters
 	private boolean headless;
 	private long seed;
-	private double simTime;
+	private double warmUpTime;
+	private double sampleTime;
     private double level0Fraction;
     private double level1Fraction;
     private double level2Fraction;
     private double level3Fraction;
-    private double leftFraction;
     private double mainDemand;
     private double rampDemand;
+    private boolean inVehicleDistraction;
+    private boolean roadSideDistraction;
+    private double leftFraction;
     private boolean additionalIncentives;
     private String outputFolderPath;
     private String inputValuesFileName;
@@ -24,25 +27,30 @@ public class VehicleAutomationModelParameters
     private String intermediateMeanValuesFileName;
     private String sequenceOutputFileName;
     private String getlaneChangeOutputFileName;
+    
+	private double simTime;
 
     // define simulation parameters in constructor
-    public VehicleAutomationModelParameters(boolean headless, long seed, double simTime, double level0Fraction, 
+    public VehicleAutomationModelParameters(boolean headless, long seed, double warmUpTime, double sampleTime, double level0Fraction, 
     										double level1Fraction, double level2Fraction, double level3Fraction, 
-    										double leftFraction, double mainDemand, double rampDemand, 
-    										boolean additionalIncentives,
+    										double mainDemand, double rampDemand, boolean inVehicleDistraction, boolean roadSideDistraction,
+    										double leftFraction, boolean additionalIncentives,
     										String outputFolderPath, String inputValuesFilePath,
     										String singleOutputFileName, String intermediateMeanValuesFileName,
     										String sequenceOutputFileName, String getlaneChangeOutputFileName) {
     	this.headless = headless;
     	this.seed = seed;
-        this.simTime = simTime;
+        this.warmUpTime = warmUpTime;
+        this.sampleTime = sampleTime;
         this.level0Fraction = level0Fraction;
         this.level1Fraction = level1Fraction;
         this.level2Fraction = level2Fraction;
         this.level3Fraction = level3Fraction;
-        this.leftFraction = leftFraction;
         this.mainDemand = mainDemand;
         this.rampDemand = rampDemand;
+        this.inVehicleDistraction = inVehicleDistraction;
+        this.roadSideDistraction = roadSideDistraction;
+        this.leftFraction = leftFraction;
         this.additionalIncentives = additionalIncentives;
         this.outputFolderPath = outputFolderPath;
         this.inputValuesFileName = inputValuesFilePath;
@@ -50,6 +58,8 @@ public class VehicleAutomationModelParameters
         this.intermediateMeanValuesFileName = intermediateMeanValuesFileName;
         this.sequenceOutputFileName = sequenceOutputFileName;
         this.getlaneChangeOutputFileName = getlaneChangeOutputFileName;
+        
+        this.simTime = warmUpTime + sampleTime;
     }
     
     // create getters and setters for the available parameters
@@ -72,6 +82,20 @@ public class VehicleAutomationModelParameters
     }
     public void setSimTime(double simTime) {
         this.simTime = simTime;
+    }
+    
+    public double getWarmUpTime() {
+        return warmUpTime;
+    }
+    public void setWarmUpTime(double warmUpTime) {
+        this.warmUpTime = warmUpTime;
+    }
+    
+    public double getSampleTime() {
+        return sampleTime;
+    }
+    public void setSampleTime(double sampleTime) {
+        this.sampleTime = sampleTime;
     }
 
     public double getLevel0Fraction() {
@@ -102,13 +126,6 @@ public class VehicleAutomationModelParameters
         this.level3Fraction = level3Fraction;
     }
     
-    public double getLeftFraction() {
-        return leftFraction;
-    }
-    public void setLeftFraction(double leftFraction) {
-        this.leftFraction = leftFraction;
-    }
-    
     public double getMainDemand() {
         return mainDemand;
     }
@@ -116,11 +133,32 @@ public class VehicleAutomationModelParameters
         this.mainDemand = mainDemand;
     }
     
+    public boolean getInVehicleDistraction() {
+    	return this.inVehicleDistraction;
+    }
+    public void setInVehicleDistraction(boolean inVehicleDistraction) {
+    	this.inVehicleDistraction = inVehicleDistraction;
+    }
+    
+    public boolean getRoadSideDistraction() {
+    	return this.roadSideDistraction;
+    }
+    public void setRoadSideDistraction(boolean roadSideDistraction) {
+    	this.roadSideDistraction = roadSideDistraction;
+    }
+    
     public double getRampDemand() {
         return rampDemand;
     }
     public void setRampDemand(double rampDemand) {
         this.rampDemand = rampDemand;
+    }
+    
+    public double getLeftFraction() {
+        return leftFraction;
+    }
+    public void setLeftFraction(double leftFraction) {
+        this.leftFraction = leftFraction;
     }
     
     public boolean getAdditionalIncentives() {

@@ -18,19 +18,22 @@ public class RunVehicleAutomationModel implements Runnable
 	@Option(names = "-seed", description = "Set simulation seed.", defaultValue = "0")
     private long seed;
 	
-    @Option(names = "-simTime", description = "Simulation time.", defaultValue = "400.0")
-    private double simTime;
+    @Option(names = "-warmUpTime", description = "Simulation warm-up time.", defaultValue = "200.0")
+    private double warmUpTime;
+	
+    @Option(names = "-sampleTime", description = "Simulation time for sampling data.", defaultValue = "1000.0")
+    private double sampleTime;
 
-    @Option(names = "-level0Fraction", description = "Fraction of level 0 vehicles.", defaultValue = "1.0")
+    @Option(names = "-level0Fraction", description = "Fraction of level 0 vehicles.", defaultValue = "0.25")
     private double level0Fraction;
     
-    @Option(names = "-level1Fraction", description = "Fraction of level 1 vehicles.", defaultValue = "0.0")
+    @Option(names = "-level1Fraction", description = "Fraction of level 1 vehicles.", defaultValue = "0.25")
     private double level1Fraction;
     
-    @Option(names = "-level2Fraction", description = "Fraction of level 2 vehicles.", defaultValue = "0.0")
+    @Option(names = "-level2Fraction", description = "Fraction of level 2 vehicles.", defaultValue = "0.25")
     private double level2Fraction;
     
-    @Option(names = "-level3Fraction", description = "Fraction of level 3 vehicles.", defaultValue = "0.0")
+    @Option(names = "-level3Fraction", description = "Fraction of level 3 vehicles.", defaultValue = "0.25")
     private double level3Fraction;
     
     @Option(names = "-mainDemand", description = "Traffic demand on main road.", defaultValue = "4275.861562432236") // 2000
@@ -38,6 +41,12 @@ public class RunVehicleAutomationModel implements Runnable
     
     @Option(names = "-rampDemand", description = "Traffic demand for on-ramp.", defaultValue = "933.2923221983136") // 500
     private double rampDemand;
+    
+    @Option(names = "-inVehicleDistraction", description = "Enable in-vehicle distraction from secondary tasks.", negatable=false, defaultValue = "true")
+    private boolean inVehicleDistraction;
+    
+    @Option(names = "-roadSideDistraction", description = "Enable distraction at the side of the road.", negatable=false, defaultValue = "true")
+    private boolean roadSideDistraction;
     
     @Option(names = "-leftFraction", description = "Left traffic fraction.", defaultValue = "0.8")
     private double leftFraction;
@@ -102,10 +111,10 @@ public class RunVehicleAutomationModel implements Runnable
     
     // method to bundle the input variables into one configuration object
     public VehicleAutomationModelParameters createConfig() {
-        return new VehicleAutomationModelParameters(headless, seed, simTime,
+        return new VehicleAutomationModelParameters(headless, seed, warmUpTime, sampleTime,
         											level0Fraction, level1Fraction, level2Fraction, level3Fraction,
-        											leftFraction, mainDemand, rampDemand,
-        											additionalIncentives,
+        											mainDemand, rampDemand, inVehicleDistraction, roadSideDistraction,
+        											leftFraction, additionalIncentives,
         											outputFolderPath, inputValuesFileName, singleOutputFileName, 
         											intermediateMeanValuesFileName, sequenceOutputFileName, laneChangeOutputFileName);
     }

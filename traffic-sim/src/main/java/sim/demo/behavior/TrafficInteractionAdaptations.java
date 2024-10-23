@@ -68,10 +68,10 @@ public class TrafficInteractionAdaptations {
             	return;
             }
             // get own gtu type
-            String thisType = gtu.getType().toString();
+            String thisType = gtu.getParameters().getParameterOrNull(VehicleConfigurations.AUTOMATION_LEVEL);
             // get first leader
             HeadwayGtu gtuLeader = leaders.first();
-            String leaderType = gtuLeader.getGtuType().toString();
+            String leaderType = gtuLeader.getParameters().getParameterOrNull(VehicleConfigurations.AUTOMATION_LEVEL);
             // change behaviour if vehicle in front is of type Level-3 and this gtu is Level-0
             // example of gtu type string: "GtuType: NL.LEVEL3CAR"
             if (thisType.contains("LEVEL0") && leaderType.contains("LEVEL3")) {
@@ -115,9 +115,9 @@ public class TrafficInteractionAdaptations {
     	public Double adaptToLaneChangingVehicle(HeadwayGtu leaderGtu) throws ParameterException
     	{
             // get own gtu type string
-            String thisType = gtu.getType().toString();
+            String thisType = gtu.getParameters().getParameterOrNull(VehicleConfigurations.AUTOMATION_LEVEL);
     		// create string from leader vehicle type
-    		String leaderType = leaderGtu.getGtuType().toString();
+    		String leaderType = leaderGtu.getParameters().getParameterOrNull(VehicleConfigurations.AUTOMATION_LEVEL);
             // change behaviour parameter value if other vehicle is of type level-3 and this gtu is level-0
             // example of gtu type string: "GtuType: NL.LEVEL3CAR"
             if (thisType.contains("LEVEL0") && leaderType.contains("LEVEL3")) {

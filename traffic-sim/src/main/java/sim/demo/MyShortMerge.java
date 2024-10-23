@@ -31,6 +31,7 @@ import org.opentrafficsim.animation.colorer.LmrsSwitchableColorer;
 import org.opentrafficsim.animation.gtu.colorer.GtuColorer;
 import org.opentrafficsim.base.parameters.ParameterException;
 import org.opentrafficsim.base.parameters.ParameterSet;
+import org.opentrafficsim.base.parameters.ParameterTypeString;
 import org.opentrafficsim.base.parameters.ParameterTypes;
 import org.opentrafficsim.base.parameters.Parameters;
 import org.opentrafficsim.core.definitions.DefaultsNl;
@@ -132,10 +133,10 @@ import nl.tudelft.simulation.jstats.streams.StreamInterface;
 import nl.tudelft.simulation.language.DsolException;
 import sim.demo.gtu.CustomLaneBasedGtuTemplate;
 import sim.demo.gtu.CustomLaneBasedGtuTemplateDistribution;
-import sim.demo.mental.CarFollowingTask;
+import sim.demo.mental.TaskCarFollowing;
 import sim.demo.mental.CustomAdaptationHeadway;
 import sim.demo.mental.CustomAdaptationSituationalAwareness;
-import sim.demo.mental.LaneChangeTask;
+import sim.demo.mental.TaskLaneChange;
 import sim.demo.mental.TaskManagerAr;
 
 /**
@@ -181,6 +182,8 @@ public class MyShortMerge extends OtsSimulationApplication<sim.demo.MyShortMerge
     
     public static double maxAcceleration = 3.0;
     public static double maxDeceleration = -8.0;
+    
+    public static final ParameterTypeString VEHICLE_TYPE = new ParameterTypeString("VEHICLE_TYPE", "Vehicle type.");
 
     /**
      * Create a ShortMerge Swing application.
@@ -358,6 +361,11 @@ public class MyShortMerge extends OtsSimulationApplication<sim.demo.MyShortMerge
     		if (event.getType().equals(Gtu.MOVE_EVENT)) {
     			String gtuId = (String) ((Object[]) event.getContent())[0];
     	        LaneBasedGtu gtu = (LaneBasedGtu) this.network.getGTU(gtuId);
+    	        
+//    	        if (gtu.getType().toString().contains("TRUCK")) {
+//    	        	System.out.println(gtu.getType().toString() + ": savedType = " + gtu.getParameters().getParameterOrNull(VEHICLE_TYPE));
+//    	        	System.out.println("Tmin=" + gtu.getParameters().getParameterOrNull(ParameterTypes.TMIN) + " - Tmax=" + gtu.getParameters().getParameterOrNull(ParameterTypes.TMAX));
+//    	        }
     	    }
     		
     		if (event.getType().equals(LaneBasedGtu.LANEBASED_MOVE_EVENT)) {
@@ -411,8 +419,8 @@ public class MyShortMerge extends OtsSimulationApplication<sim.demo.MyShortMerge
     			public LanePerception generatePerception(final LaneBasedGtu gtu)
     			{
     				Set<Task> tasks = new LinkedHashSet<>();
-                    tasks.add(new CarFollowingTask());
-                    tasks.add(new LaneChangeTask());
+                    tasks.add(new TaskCarFollowing());
+                    tasks.add(new TaskLaneChange());
                     
                     Set<BehavioralAdaptation> behavioralAdapatations = new LinkedHashSet<>();
                     // these adaptations must be present! next to adjusting parameters based on task load,
@@ -487,6 +495,14 @@ public class MyShortMerge extends OtsSimulationApplication<sim.demo.MyShortMerge
             CrossSectionLink linkF = (CrossSectionLink) this.network.getLink("FF2");
 
             ParameterFactoryByType bcFactory = new ParameterFactoryByType();
+            // vehicle type
+            bcFactory.addParameter(car, VEHICLE_TYPE, "CAR");
+            bcFactory.addParameter(car, ParameterTypes.TMIN, Duration.instantiateSI(0.1));
+			bcFactory.addParameter(car, ParameterTypes.TMAX, Duration.instantiateSI(0.2));
+            bcFactory.addParameter(truck, VEHICLE_TYPE, "TRUCK");
+            bcFactory.addParameter(truck, ParameterTypes.TMIN, Duration.instantiateSI(1.0));
+			bcFactory.addParameter(truck, ParameterTypes.TMAX, Duration.instantiateSI(2.0));
+            // car vs truck variables
             bcFactory.addParameter(car, ParameterTypes.FSPEED, new DistNormal(stream, 123.7 / 120, 12.0 / 120));
             bcFactory.addParameter(car, LmrsParameters.SOCIO, new DistNormal(stream, 0.5, 0.1));
             bcFactory.addParameter(truck, ParameterTypes.A, new Acceleration(0.8, AccelerationUnit.SI));
@@ -506,7 +522,7 @@ public class MyShortMerge extends OtsSimulationApplication<sim.demo.MyShortMerge
 			// tasks
 			bcFactory.addParameter(TaskManagerAr.ALPHA, TaskManagerAr.ALPHA.getDefaultValue());
 			bcFactory.addParameter(TaskManagerAr.BETA, TaskManagerAr.BETA.getDefaultValue());
-			bcFactory.addParameter(CarFollowingTask.HEXP, CarFollowingTask.HEXP.getDefaultValue());
+			bcFactory.addParameter(TaskCarFollowing.HEXP, TaskCarFollowing.HEXP.getDefaultValue());
 			
             Generator<Duration> headwaysA1 = new HeadwayGenerator(getSimulator(), MAIN_DEMAND);
             Generator<Duration> headwaysA2 = new HeadwayGenerator(getSimulator(), MAIN_DEMAND);
