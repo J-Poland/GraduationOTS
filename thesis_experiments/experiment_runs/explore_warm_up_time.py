@@ -83,8 +83,8 @@ def create_model(_seed):
         _policies = add_levers_to_policies(_policies, lhs_samples_dict, samples_per_parameter)
 
     # define uncertain variables
-    _ema_model.uncertainties = [RealParameter('main_demand', 2000, 6000),
-                                RealParameter('ramp_demand', 400, 1000)]
+    _ema_model.uncertainties = [RealParameter('main_demand', 3864, 5796),
+                                RealParameter('ramp_demand', 500, 2250)]
 
     # list outcome variables of interest
     _ema_model.outcomes = [ScalarOutcome('mean_density'),

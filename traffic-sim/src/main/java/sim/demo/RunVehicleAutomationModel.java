@@ -45,7 +45,7 @@ public class RunVehicleAutomationModel implements Runnable
     @Option(names = "-inVehicleDistraction", description = "Enable in-vehicle distraction from secondary tasks.", negatable=false, defaultValue = "true")
     private boolean inVehicleDistraction;
     
-    @Option(names = "-roadSideDistraction", description = "Enable distraction at the side of the road.", negatable=false, defaultValue = "true")
+    @Option(names = "-roadSideDistraction", description = "Enable distraction at the side of the road.", negatable=false, defaultValue = "false")
     private boolean roadSideDistraction;
     
     @Option(names = "-leftFraction", description = "Left traffic fraction.", defaultValue = "0.8")

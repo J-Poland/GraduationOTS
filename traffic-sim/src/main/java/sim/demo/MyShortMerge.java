@@ -139,6 +139,9 @@ import sim.demo.mental.CustomAdaptationSituationalAwareness;
 import sim.demo.mental.TaskLaneChange;
 import sim.demo.mental.TaskManagerAr;
 
+
+import org.opentrafficsim.road.gtu.lane.tactical.lmrs.IncentiveGetInLane;
+
 /**
  * <p>
  * Copyright (c) 2013-2024 Delft University of Technology, PO Box 5, 2600 AA, Delft, the Netherlands. All rights reserved. <br>
@@ -453,7 +456,7 @@ public class MyShortMerge extends OtsSimulationApplication<sim.demo.MyShortMerge
             mandatoryIncentives.add(new IncentiveRoute());
             if (ADDITIONAL_INCENTIVES)
             {
-                // mandatoryIncentives.add(new IncentiveGetInLane());
+//                 mandatoryIncentives.add(new IncentiveGetInLane());
             }
             voluntaryIncentives.add(new IncentiveSpeedWithCourtesy());
             voluntaryIncentives.add(new IncentiveKeep());
@@ -466,7 +469,7 @@ public class MyShortMerge extends OtsSimulationApplication<sim.demo.MyShortMerge
             accelerationIncentives.add(new AccelerationTrafficLights());
             accelerationIncentives.add(new AccelerationConflicts());
             LaneBasedTacticalPlannerFactory<Lmrs> tacticalFactory = new LmrsFactory(idmPlusFactory,
-                    perceptionFactory, SYNCHRONIZATION, COOPERATION, GapAcceptance.INFORMED, Tailgating.NONE,
+                    perceptionFactory, SYNCHRONIZATION, COOPERATION, GapAcceptance.INFORMED, Tailgating.PRESSURE,
                     mandatoryIncentives, voluntaryIncentives, accelerationIncentives);
 
             GtuType car = DefaultsNl.CAR;

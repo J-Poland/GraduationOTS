@@ -632,7 +632,8 @@ public class VehicleAutomationModel extends AbstractOtsModel implements EventLis
 		Set<AccelerationIncentive> accelerationIncentives = new LinkedHashSet<>();
 		mandatoryIncentives.add(new IncentiveRoute());
 		if (additionalIncentives) {
-			 mandatoryIncentives.add(new IncentiveGetInLane());
+			// this incentive breaks the Renderable2d class to draw GTU animations
+//			 mandatoryIncentives.add(new IncentiveGetInLane());
 		}
 		voluntaryIncentives.add(new IncentiveSpeedWithCourtesy());
 		voluntaryIncentives.add(new IncentiveKeep());
