@@ -30,12 +30,13 @@ public class ExportSimulationOutput
 	CsvWriter singleWriter = null;
 	CsvWriter intermediateWriter = null;
 	CsvWriter laneChangeWriter = null;
+	CsvWriter collisionWriter = null;
 	
 	/**
 	 * Constructor for ExportSimulationOutput class.
 	 */
 	public ExportSimulationOutput(String outputFolderPath, String inputFileName, String sequenceFileName, String singleFileName,
-								  String intermediateFileName, String laneChangeFileName)
+								  String intermediateFileName, String laneChangeFileName, String collisionFileName)
 	{	
 		// set output folder path
 		outputFolder = outputFolderPath;
@@ -49,6 +50,7 @@ public class ExportSimulationOutput
 		singleWriter = createWriter(singleFileName);
 		intermediateWriter = createWriter(intermediateFileName);
 		laneChangeWriter = createWriter(laneChangeFileName);
+		collisionWriter = createWriter(collisionFileName);
 		
 		// close all writers when program is finished or Python terminates the Java program
 		// otherwise the generated zip files may be corrupted
@@ -137,6 +139,11 @@ public class ExportSimulationOutput
 		}
 		try {
 			laneChangeWriter.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		try {
+			collisionWriter.close();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -321,6 +328,45 @@ public class ExportSimulationOutput
 	            
             // user feedback
             System.out.println("Lane change CSV file created successfully.");
+		}
+	}
+	
+	public void exportCollisionsToCsv(ArrayList<String> collisionTime, ArrayList<String> collisionIds, ArrayList<String> collisionTypes, 
+			ArrayList<String> collisionLeaderIds, ArrayList<String> collisionLeaderTypes, String collisionFileName) {
+		// only continue when output data is available
+		if (!collisionIds.isEmpty()) {
+			
+			// user feedback
+			System.out.println("\nCollision output data exporting to CSV file at \n" + "'" + outputFolder + "\\" + collisionFileName + "'"); 
+			
+			// go through all required row indexes
+			int maxLength = collisionIds.size();
+            for (int i = -1; i < maxLength; i++) {
+            	// create list of values for this row index
+            	List<String> rowValues = new ArrayList<String>();
+            	// headers
+            	if (i == -1) {
+	    			rowValues.add("time");
+            		rowValues.add("id");
+            		rowValues.add("type");
+					rowValues.add("leader_id");
+	            	rowValues.add("leader_type");
+            	}
+            	// values
+            	else {
+	    			rowValues.add(collisionTime.get(i));
+	            	rowValues.add(collisionIds.get(i));
+	            	rowValues.add(collisionTypes.get(i));
+	            	rowValues.add(collisionLeaderIds.get(i));
+	            	rowValues.add(collisionLeaderTypes.get(i));
+            	}
+				
+            	// write this row into CSV file
+	            collisionWriter.writeRecord(rowValues);
+            }
+	            
+            // user feedback
+            System.out.println("Collision CSV file created successfully.");
 		}
 	}
 	

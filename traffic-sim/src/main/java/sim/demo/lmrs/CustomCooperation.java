@@ -21,7 +21,7 @@ import org.opentrafficsim.road.gtu.lane.tactical.util.lmrs.Desire;
 import org.opentrafficsim.road.gtu.lane.tactical.util.lmrs.LmrsUtil;
 import org.opentrafficsim.road.network.speed.SpeedLimitInfo;
 
-import sim.demo.behavior.TrafficInteractionAdaptations.LaneChangingBehavior;
+import sim.demo.vehicleconfigurations.VehicleBehaviourTowardsOthers.LaneChangingBehavior;
 
 /**
  * This is a copy from the LMRS Cooperation class, but with the addition of changes in 

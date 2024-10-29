@@ -1,20 +1,13 @@
 package sim.demo.mental;
 
-import static org.opentrafficsim.base.parameters.constraint.NumericConstraint.POSITIVE;
-import static org.opentrafficsim.base.parameters.constraint.NumericConstraint.POSITIVEZERO;
-
 import org.djunits.value.vdouble.scalar.Duration;
-import org.djutils.exceptions.Throw;
 import org.opentrafficsim.base.parameters.ParameterException;
-import org.opentrafficsim.base.parameters.ParameterTypeDouble;
-import org.opentrafficsim.base.parameters.ParameterTypeDuration;
 import org.opentrafficsim.base.parameters.ParameterTypes;
 import org.opentrafficsim.base.parameters.Parameters;
 import org.opentrafficsim.road.gtu.lane.perception.mental.AdaptationSituationalAwareness;
 import org.opentrafficsim.road.gtu.lane.perception.mental.Fuller;
-import org.opentrafficsim.road.gtu.lane.perception.mental.Fuller.BehavioralAdaptation;
 
-import sim.demo.VehicleConfigurations;
+import sim.demo.vehicleconfigurations.VehicleAutomationConfigurations;
 
 /**
  * Behavioral adaptation which sets parameters for situational awareness and reaction time.
@@ -58,8 +51,8 @@ public class CustomAdaptationSituationalAwareness extends AdaptationSituationalA
     
     private double calculateTr(Parameters parameters, double sa, double saMin, double saMax) throws ParameterException {
     	// get reaction time range
-    	double trMax = parameters.getParameter(VehicleConfigurations.MAX_TR).si;
-    	double trMin = parameters.getParameter(VehicleConfigurations.MIN_TR).si;
+    	double trMax = parameters.getParameter(VehicleAutomationConfigurations.MAX_TR).si;
+    	double trMin = parameters.getParameter(VehicleAutomationConfigurations.MIN_TR).si;
     	
     	// adapt reaction time only if minimum reaction time is lower than the maximum reaction time
     	if (trMin < trMax) {

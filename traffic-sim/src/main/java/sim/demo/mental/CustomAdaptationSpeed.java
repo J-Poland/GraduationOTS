@@ -6,7 +6,7 @@ import org.opentrafficsim.base.parameters.Parameters;
 import org.opentrafficsim.road.gtu.lane.perception.mental.Fuller;
 import org.opentrafficsim.road.gtu.lane.perception.mental.AdaptationSpeed;
 
-import sim.demo.VehicleConfigurations;
+import sim.demo.vehicleconfigurations.VehicleAutomationConfigurations;
 
 /**
  * Behavioral adaptation which reduces the desired speed to reduce task-demand.
@@ -29,7 +29,7 @@ public class CustomAdaptationSpeed extends AdaptationSpeed
     public void adapt(final Parameters parameters, final double taskSaturation) throws ParameterException
     {
     	// only perform adaptation when the car-following task is not automated (thus level 0)
-    	if (parameters.getParameterOrNull(VehicleConfigurations.AUTOMATION_LEVEL).contains("LEVEL0")) {
+    	if (parameters.getParameterOrNull(VehicleAutomationConfigurations.AUTOMATION_LEVEL).contains("LEVEL0")) {
     		
 	        if (this.fSpeed0 == null)
 	        {

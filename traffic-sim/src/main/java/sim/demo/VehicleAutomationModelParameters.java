@@ -19,14 +19,15 @@ public class VehicleAutomationModelParameters
     private double rampDemand;
     private boolean inVehicleDistraction;
     private boolean roadSideDistraction;
-    private double leftFraction;
-    private boolean additionalIncentives;
+    private double sensitivityAnalysisValue;
+    
     private String outputFolderPath;
     private String inputValuesFileName;
     private String singleOutputFileName;
     private String intermediateMeanValuesFileName;
     private String sequenceOutputFileName;
-    private String getlaneChangeOutputFileName;
+    private String laneChangeOutputFileName;
+    private String collisionOutputFileName;
     
 	private double simTime;
 
@@ -34,10 +35,11 @@ public class VehicleAutomationModelParameters
     public VehicleAutomationModelParameters(boolean headless, long seed, double warmUpTime, double sampleTime, double level0Fraction, 
     										double level1Fraction, double level2Fraction, double level3Fraction, 
     										double mainDemand, double rampDemand, boolean inVehicleDistraction, boolean roadSideDistraction,
-    										double leftFraction, boolean additionalIncentives,
+    										double sensitivityAnalysisValue,
     										String outputFolderPath, String inputValuesFilePath,
     										String singleOutputFileName, String intermediateMeanValuesFileName,
-    										String sequenceOutputFileName, String getlaneChangeOutputFileName) {
+    										String sequenceOutputFileName, String laneChangeOutputFileName,
+    										String collisionOutputFileName) {
     	this.headless = headless;
     	this.seed = seed;
         this.warmUpTime = warmUpTime;
@@ -50,14 +52,15 @@ public class VehicleAutomationModelParameters
         this.rampDemand = rampDemand;
         this.inVehicleDistraction = inVehicleDistraction;
         this.roadSideDistraction = roadSideDistraction;
-        this.leftFraction = leftFraction;
-        this.additionalIncentives = additionalIncentives;
+        this.sensitivityAnalysisValue = sensitivityAnalysisValue;
+        
         this.outputFolderPath = outputFolderPath;
         this.inputValuesFileName = inputValuesFilePath;
         this.singleOutputFileName = singleOutputFileName;
         this.intermediateMeanValuesFileName = intermediateMeanValuesFileName;
         this.sequenceOutputFileName = sequenceOutputFileName;
-        this.getlaneChangeOutputFileName = getlaneChangeOutputFileName;
+        this.laneChangeOutputFileName = laneChangeOutputFileName;
+        this.collisionOutputFileName = collisionOutputFileName;
         
         this.simTime = warmUpTime + sampleTime;
     }
@@ -154,18 +157,11 @@ public class VehicleAutomationModelParameters
         this.rampDemand = rampDemand;
     }
     
-    public double getLeftFraction() {
-        return leftFraction;
+    public double getSensitivityAnalysisValue() {
+        return sensitivityAnalysisValue;
     }
-    public void setLeftFraction(double leftFraction) {
-        this.leftFraction = leftFraction;
-    }
-    
-    public boolean getAdditionalIncentives() {
-        return additionalIncentives;
-    }
-    public void setAdditionalIncentives(boolean additionalIncentives) {
-        this.additionalIncentives = additionalIncentives;
+    public void setSensitivityAnalysisValue(double sensitivityAnalysisValue) {
+        this.sensitivityAnalysisValue = sensitivityAnalysisValue;
     }
     
     
@@ -205,11 +201,18 @@ public class VehicleAutomationModelParameters
         this.sequenceOutputFileName = sequenceOutputFileName;
     }
     
-    public String getlaneChangeOutputFileName() {
-        return getlaneChangeOutputFileName;
+    public String getLaneChangeOutputFileName() {
+        return laneChangeOutputFileName;
     }
-    public void setlaneChangeOutputFileName(String getlaneChangeOutputFileName) {
-        this.getlaneChangeOutputFileName = getlaneChangeOutputFileName;
+    public void setLaneChangeOutputFileName(String laneChangeOutputFileName) {
+        this.laneChangeOutputFileName = laneChangeOutputFileName;
+    }
+    
+    public String getCollisionOutputFileName() {
+        return collisionOutputFileName;
+    }
+    public void setCollisionOutputFileName(String collisionOutputFileName) {
+        this.collisionOutputFileName = collisionOutputFileName;
     }
 
 }

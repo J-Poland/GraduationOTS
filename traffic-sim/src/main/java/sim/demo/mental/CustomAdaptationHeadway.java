@@ -1,17 +1,13 @@
 package sim.demo.mental;
 
-import static org.opentrafficsim.base.parameters.constraint.NumericConstraint.POSITIVEZERO;
-
 import org.djunits.value.vdouble.scalar.Duration;
 import org.opentrafficsim.base.parameters.ParameterException;
-import org.opentrafficsim.base.parameters.ParameterTypeDouble;
 import org.opentrafficsim.base.parameters.ParameterTypes;
 import org.opentrafficsim.base.parameters.Parameters;
 import org.opentrafficsim.road.gtu.lane.perception.mental.AdaptationHeadway;
 import org.opentrafficsim.road.gtu.lane.perception.mental.Fuller;
-import org.opentrafficsim.road.gtu.lane.perception.mental.Fuller.BehavioralAdaptation;
 
-import sim.demo.VehicleConfigurations;
+import sim.demo.vehicleconfigurations.VehicleAutomationConfigurations;
 
 /**
  * Behavioral adaptation which increases the desired headway to reduce task-demand.
@@ -36,7 +32,7 @@ public class CustomAdaptationHeadway extends AdaptationHeadway
     public void adapt(final Parameters parameters, final double taskSaturation) throws ParameterException
     {
     	// only perform adaptation when the car-following task is not automated (thus level 0)
-    	if (parameters.getParameterOrNull(VehicleConfigurations.AUTOMATION_LEVEL).contains("LEVEL0")) {
+    	if (parameters.getParameterOrNull(VehicleAutomationConfigurations.AUTOMATION_LEVEL).contains("LEVEL0")) {
     		
 	        if (this.t0Min == null)
 	        {

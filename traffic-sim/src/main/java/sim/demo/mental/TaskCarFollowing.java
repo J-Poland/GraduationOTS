@@ -16,8 +16,9 @@ import org.opentrafficsim.road.gtu.lane.perception.categories.neighbors.TaskHead
 import org.opentrafficsim.road.gtu.lane.perception.headway.HeadwayGtu;
 import org.opentrafficsim.road.gtu.lane.perception.mental.AbstractTask;
 
-import sim.demo.VehicleConfigurations;
-
+/**
+ * Car-following task demand based on headway.
+ */
 public class TaskCarFollowing extends AbstractTask
 {
 
@@ -38,34 +39,16 @@ public class TaskCarFollowing extends AbstractTask
     public double calculateTaskDemand(final LanePerception perception, final LaneBasedGtu gtu, final Parameters parameters)
             throws ParameterException, GtuException
     {
-    	// only add task demand for non automated car-following (automation level 0)
-    	String gtuType = gtu.getParameters().getParameterOrNull(VehicleConfigurations.AUTOMATION_LEVEL);
-    	if (gtuType != null && gtuType.contains("LEVEL0")) {
-	        try
-	        {
-	            NeighborsPerception neighbors = perception.getPerceptionCategory(NeighborsPerception.class);
-	            PerceptionCollectable<HeadwayGtu, LaneBasedGtu> leaders = neighbors.getLeaders(RelativeLane.CURRENT);
-	            Duration headway = leaders.collect(new TaskHeadwayCollector(gtu.getSpeed()));
-	            double demand = headway == null ? 0.0 : Math.exp(-headway.si / parameters.getParameter(HEXP).si);
-	            
-	            // update GTU parameter
-	            gtu.getParameters().setParameter(VehicleConfigurations.CF_TASK_DEMAND, demand);
-	            
-	            // return demand
-	            return demand;
-	        }
-	        catch (OperationalPlanException ex)
-	        {
-	            throw new GtuException(ex);
-	        }
-    	} else {
-    		double demand = 0.0;
-    		
-    		// update GTU parameter
-            gtu.getParameters().setParameter(VehicleConfigurations.CF_TASK_DEMAND, demand);
-            
-            // return demand
-            return demand;
-    	}
+        try
+        {
+            NeighborsPerception neighbors = perception.getPerceptionCategory(NeighborsPerception.class);
+            PerceptionCollectable<HeadwayGtu, LaneBasedGtu> leaders = neighbors.getLeaders(RelativeLane.CURRENT);
+            Duration headway = leaders.collect(new TaskHeadwayCollector(gtu.getSpeed()));
+            return headway == null ? 0.0 : Math.exp(-headway.si / parameters.getParameter(HEXP).si);
+        }
+        catch (OperationalPlanException ex)
+        {
+            throw new GtuException(ex);
+        }
     }
 }
