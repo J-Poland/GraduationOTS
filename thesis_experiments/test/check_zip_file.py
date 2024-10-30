@@ -5,7 +5,7 @@ import io
 
 
 # set file path and name
-folder_path = r'C:\Users\jesse\Documents\Java\TrafficSimulation-workspace\traffic-sim\src\main\resources\output'
+folder_path = r'C:\Users\jesse\Documents\Java\TrafficSimulation-workspace\traffic-sim\src\main\resources\full_level_runs_0\seed_0\run_0'
 file_name = r'sequenceOutputData.csv'
 
 zip_path = os.path.join(folder_path, file_name[:-4] + '.zip')
@@ -26,4 +26,6 @@ with zipfile.ZipFile(zip_path, 'r') as zip_ref:
         with io.TextIOWrapper(file) as text_file:
             # Now, read the CSV into a DataFrame
             df_output = pd.read_csv(text_file)
+
+            print(len(df_output))
 

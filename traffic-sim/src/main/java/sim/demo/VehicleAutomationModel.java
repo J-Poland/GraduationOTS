@@ -51,7 +51,6 @@ import org.opentrafficsim.road.gtu.generator.GeneratorPositions.LaneBiases;
 import org.opentrafficsim.road.gtu.generator.characteristics.DefaultLaneBasedGtuCharacteristicsGeneratorOd;
 import org.opentrafficsim.road.gtu.generator.characteristics.LaneBasedGtuCharacteristicsGeneratorOd;
 import org.opentrafficsim.road.gtu.lane.AbstractLaneBasedMoveChecker;
-import org.opentrafficsim.road.gtu.lane.CollisionException;
 import org.opentrafficsim.road.gtu.lane.LaneBasedGtu;
 import org.opentrafficsim.road.gtu.lane.perception.CategoricalLanePerception;
 import org.opentrafficsim.road.gtu.lane.perception.LanePerception;
@@ -68,9 +67,7 @@ import org.opentrafficsim.road.gtu.lane.perception.categories.neighbors.HeadwayG
 import org.opentrafficsim.road.gtu.lane.perception.categories.neighbors.NeighborsPerception;
 import org.opentrafficsim.road.gtu.lane.perception.categories.neighbors.HeadwayGtuType.PerceivedHeadwayGtuType;
 import org.opentrafficsim.road.gtu.lane.perception.headway.HeadwayGtu;
-import org.opentrafficsim.road.gtu.lane.perception.mental.AdaptationHeadway;
 import org.opentrafficsim.road.gtu.lane.perception.mental.AdaptationSituationalAwareness;
-import org.opentrafficsim.road.gtu.lane.perception.mental.AdaptationSpeed;
 import org.opentrafficsim.road.gtu.lane.perception.mental.Fuller;
 import org.opentrafficsim.road.gtu.lane.perception.mental.Fuller.BehavioralAdaptation;
 import org.opentrafficsim.road.gtu.lane.perception.mental.Task;
@@ -109,6 +106,7 @@ import nl.tudelft.simulation.dsol.simulators.SimulatorInterface;
 import nl.tudelft.simulation.jstats.streams.MersenneTwister;
 import nl.tudelft.simulation.jstats.streams.StreamInterface;
 import sim.demo.lmrs.CustomCooperation;
+import sim.demo.lmrs.CustomTailgating;
 import sim.demo.lmrs.SocioDesiredSpeed;
 import sim.demo.mental.TaskDriverDistraction;
 import sim.demo.mental.CustomAdaptationHeadway;
@@ -118,7 +116,6 @@ import sim.demo.mental.TaskCarFollowing;
 import sim.demo.mental.TaskLaneChange;
 import sim.demo.mental.TaskManagerAr;
 import sim.demo.vehicleconfigurations.VehicleAutomationConfigurations;
-import sim.demo.vehicleconfigurations.VehicleBehaviourTowardsOthers.CarFollowingBehavior;
 
 
 /**
@@ -195,16 +192,22 @@ public class VehicleAutomationModel extends AbstractOtsModel implements EventLis
  	static final double minAcceleration = -8.0;
  	
  	/** Synchronisation. */
- 	static final Synchronization synchronizationMethod = Synchronization.ALIGN_GAP;
+ 	static final Synchronization synchronizationMethod = Synchronization.PASSIVE;
 
  	/** Cooperation. */
- 	static final Cooperation cooperationMethod = CustomCooperation.PASSIVE_MOVING;
+ 	static final Cooperation cooperationMethod = CustomCooperation.PASSIVE;
  	
  	/** GapAcceptance. */
  	static final GapAcceptance gapAcceptanceMethod= GapAcceptance.INFORMED;
  	
  	/** Tailgating. */
- 	static final Tailgating tailgatingMethod = Tailgating.PRESSURE;
+ 	static final Tailgating tailgatingMethod = CustomTailgating.PRESSURE_HUMAN;
+ 	
+ 	/** Estimation. */
+ 	static final Estimation estimationMethod = Estimation.FACTOR_ESTIMATION;
+ 	
+ 	/** Anticipation. */
+ 	static final Anticipation anticipationMethod = Anticipation.CONSTANT_SPEED;
  	
     
  	// input parameters
@@ -503,17 +506,6 @@ public class VehicleAutomationModel extends AbstractOtsModel implements EventLis
 					e.printStackTrace();
 				}
 			};
-	        
-	        // change driving behaviour because of surrounding traffic
-	        try {
-	        	// change headway for vehicle interactions during CF
-	        	CarFollowingBehavior carFollowingBehavior = new CarFollowingBehavior(gtu);
-	        	carFollowingBehavior.adaptToVehicleInFront();
-	        	// change LC behaviour for vehicle interactions for cooperation (because level-0 vehicles will try to gain from level-3 vehicles)
-	        	// lane changing behaviour is changed when lmrs cooperation decision is made, CustomCooperation.java contains this logic
-			} catch (OperationalPlanException | ParameterException e) {
-				e.printStackTrace();
-			}
 		}
 		
 		if (event.getType().equals(LaneBasedGtu.LANEBASED_MOVE_EVENT)) {
@@ -578,7 +570,7 @@ public class VehicleAutomationModel extends AbstractOtsModel implements EventLis
 
         // car-following model: the normal desired headway model adjusts as a response to social pressure from the following vehicle
         CarFollowingModelFactory<IdmPlus> cfModelFactory = new AbstractIdmFactory<>(new IdmPlus(AbstractIdm.HEADWAY, new SocioDesiredSpeed(AbstractIdm.DESIRED_SPEED)), stream);
-
+        
         // perception factory for mental processes
         PerceptionFactory perceptionFactory = new PerceptionFactory()
         {
@@ -594,13 +586,7 @@ public class VehicleAutomationModel extends AbstractOtsModel implements EventLis
                  * adapting the headway and desired speed based on high task saturation.
                  */
                 ParameterSet perceptionParams = new ParameterSet();
-                perceptionParams.setDefaultParameters(Fuller.class);
-                perceptionParams.setDefaultParameters(TaskManagerAr.class);
-                perceptionParams.setDefaultParameters(AdaptationSituationalAwareness.class);
-                perceptionParams.setDefaultParameter(TaskCarFollowing.HEXP);
-                perceptionParams.setDefaultParameter(Estimation.OVER_EST);
-                perceptionParams.setDefaultParameter(AdaptationHeadway.BETA_T);
-                perceptionParams.setDefaultParameter(AdaptationSpeed.BETA_V0);
+                // these parameters are managed in the VehicleAutomationConfigurations class
                 return perceptionParams;
             }
 
@@ -612,7 +598,6 @@ public class VehicleAutomationModel extends AbstractOtsModel implements EventLis
                 Set<Task> tasks = new LinkedHashSet<>();
                 tasks.add(new TaskCarFollowing());
                 tasks.add(new TaskLaneChange());
-                
                 // also add driver distraction demand
             	double roadSideDistractionPos = network.getNode("B").getLocation().getX();
             	tasks.add(new TaskDriverDistraction(stream, inVehicleDistractionEnabled,
@@ -620,18 +605,17 @@ public class VehicleAutomationModel extends AbstractOtsModel implements EventLis
                 
                 // Behavioral adaptations (AdaptationSituationalAwareness only sets situational awareness and reaction time)
                 Set<BehavioralAdaptation> behavioralAdapatations = new LinkedHashSet<>();
-                //TODO: interaction adaptations?
                 behavioralAdapatations.add(new CustomAdaptationSituationalAwareness());
                 behavioralAdapatations.add(new CustomAdaptationHeadway());
                 behavioralAdapatations.add(new CustomAdaptationSpeed());
                 // AR task manager, assuming lane changing to be primary
-                TaskManager taskManager = new TaskManagerAr("car-following");
+                TaskManager taskManager = new TaskManagerAr("lane-changing");
                 // Fuller framework based on components
                 CategoricalLanePerception perception =
                         new CategoricalLanePerception(gtu, new Fuller(tasks, behavioralAdapatations, taskManager));
                 // Imperfect estimation of distance and speed difference, with reaction time, and compensatory anticipation
                 HeadwayGtuType headwayGtuType =
-                        new PerceivedHeadwayGtuType(Estimation.FACTOR_ESTIMATION, Anticipation.CONSTANT_SPEED);
+                        new PerceivedHeadwayGtuType(estimationMethod, anticipationMethod);
                 // Standard perception categories, using imperfect perception regarding neighbors with the HeadwayGtuType
                 perception.addPerceptionCategory(new DirectEgoPerception<>(perception));
                 perception.addPerceptionCategory(new DirectInfrastructurePerception(perception));
@@ -1457,8 +1441,9 @@ public class VehicleAutomationModel extends AbstractOtsModel implements EventLis
                 	TrackCollisions(gtu.getId(), gtuType, leader.getObject().getId(), gtuLeaderType);
                 	// count collision
                     outputDataManager.increaseSingleCount("collisions");
-                    // throw exception
-                    throw new CollisionException("GTU " + gtu.getId() + " collided with GTU " + leader.getObject().getId());
+                    // show error
+                    System.err.println("GTU " + gtu.getId() + " collided with GTU " + leader.getObject().getId());
+                    gtu.destroy();
                 }
             }
             catch (OperationalPlanException exception)

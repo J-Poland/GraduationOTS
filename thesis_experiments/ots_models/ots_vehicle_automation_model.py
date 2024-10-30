@@ -28,18 +28,16 @@ class VehicleAutomationModel:
                               r'\traffic-sim\src\main\java\sim\demo\RunVehicleAutomationModel.java'
 
         # set Java folder path (for compilation of required Java classes)
-        self.java_project_folder = r'C:\Users\jesse\Documents\Java\TrafficSimulation-workspace' \
+        self.java_project_folder = r'C:\Users\jesse\Documents\Java\TrafficSimulation-new-175-workspace' \
                                    r'\traffic-sim\src\main\java\sim\demo'
 
-        # set Java resources folder
-        self.resources_folder = r'C:\Users\jesse\Documents\Java\TrafficSimulation-workspace' \
-                                r'\traffic-sim\src\main\resources'
-
         # output data folder
+        self.output_parent_folder = r'C:\Users\jesse\Documents\Java\TrafficSimulation-new-175-workspace' \
+                                    r'\traffic-sim\src\main\resources'
         self.output_folder = None
         self.generate_output_folder()
 
-        # output for EMA Workbench experiment file name
+        # output file for EMA Workbench experiments
         self.output_file_name = r'singleOutputData.csv'
 
         # classpath
@@ -52,7 +50,7 @@ class VehicleAutomationModel:
 
     # function to create output folder path
     def generate_output_folder(self):
-        output_folder = os.path.join(self.resources_folder,
+        output_folder = os.path.join(self.output_parent_folder,
                                      f'{self.experiment_name}',
                                      f'seed_{self.seed}',
                                      f'run_{self.replication_count}')
@@ -74,7 +72,8 @@ class VehicleAutomationModel:
     # function to start the simulation's Java model
     def run_simulation(self, warm_up_time, sample_time,
                        level0_fraction, level1_fraction, level2_fraction, level3_fraction,
-                       main_demand, ramp_demand, in_vehicle_distraction, road_side_distraction):
+                       main_demand, ramp_demand, in_vehicle_distraction, road_side_distraction,
+                       sensitivity_analysis_value):
         # only run simulation when seed is known
         if self.seed is not None:
             # get output folder for this run
@@ -104,6 +103,8 @@ class VehicleAutomationModel:
                 f'-rampDemand={ramp_demand}',
                 f'-inVehicleDistraction={in_vehicle_distraction}',
                 f'-roadSideDistraction={road_side_distraction}',
+                f'-sensitivityAnalysisValue={sensitivity_analysis_value}',
+
                 rf'-outputFolderPath={output_path}',
                 rf'-inputValuesFileName=inputValues.csv',
                 rf'-singleOutputFileName=singleOutputData.csv',
@@ -175,13 +176,15 @@ class VehicleAutomationModel:
         ramp_demand = kwargs['ramp_demand']
         in_vehicle_distraction = kwargs['in_vehicle_distraction']
         road_side_distraction = kwargs['road_side_distraction']
+        sensitivity_analysis_value = kwargs['sensitivity_analysis_value']
 
         # run model (also receive fixed corresponding output path,
         #            self. reference could be changed by parallel running simulations)
         this_output_folder = self.run_simulation(warm_up_time, sample_time, level0_fraction, level1_fraction,
                                                  level2_fraction, level3_fraction,
                                                  main_demand, ramp_demand,
-                                                 in_vehicle_distraction, road_side_distraction)
+                                                 in_vehicle_distraction, road_side_distraction,
+                                                 sensitivity_analysis_value)
 
         # retrieve output data
         output = self.load_simulation_output(this_output_folder, self.output_file_name)

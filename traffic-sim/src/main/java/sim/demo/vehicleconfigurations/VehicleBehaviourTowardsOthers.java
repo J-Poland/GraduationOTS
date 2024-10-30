@@ -29,63 +29,7 @@ public class VehicleBehaviourTowardsOthers {
         return value;
 	}
 	
-	
-	// class to change car-following interactions between vehicle types
-    public static class CarFollowingBehavior
-    {
-    	private long uniqueSeed;
-    	private LaneBasedGtu gtu;
-    	private StreamInterface stream;
-    	
-    	public CarFollowingBehavior(LaneBasedGtu gtu) throws OperationalPlanException, ParameterException
-    	{
-    		// get gtu
-    		this.gtu = gtu;
-    		
-    		// get simulator info
-    		Duration simTime = gtu.getSimulator().getSimulatorTime();
-    		StreamInterface simStream = gtu.getSimulator().getModel().getDefaultStream();
-    		
-    		// set unique seed (by simulation stream, simulation time, and vehicle id)
-    		// this is necessary to draw different values for different GTUs and different times
-    		// but keep reproducibility of the simulation
-    		uniqueSeed = simStream.nextLong() + Double.doubleToLongBits(simTime.si) + Long.parseLong(gtu.getId());
-    		StreamInterface stream = new MersenneTwister(Math.abs(uniqueSeed));
-    		this.stream = stream;
-    	}
-    	
-    	public void adaptToVehicleInFront() throws OperationalPlanException, ParameterException
-    	{
-    		// get vehicle in front
-    		NeighborsPerception neighbors = gtu.getTacticalPlanner().getPerception().getPerceptionCategory(NeighborsPerception.class);
-            PerceptionCollectable<HeadwayGtu, LaneBasedGtu> leaders = neighbors.getLeaders(RelativeLane.CURRENT);
-            // only continue if leaders are present
-            if (leaders.isEmpty()) {
-            	return;
-            }
-            // get own gtu type
-            String thisType = gtu.getParameters().getParameterOrNull(VehicleAutomationConfigurations.AUTOMATION_LEVEL);
-            // get first leader
-            HeadwayGtu gtuLeader = leaders.first();
-            String leaderType = gtuLeader.getParameters().getParameterOrNull(VehicleAutomationConfigurations.AUTOMATION_LEVEL);
-            // change behaviour if vehicle in front is of type Level-3 and this gtu is Level-0
-            // example of gtu type string: "GtuType: NL.LEVEL3CAR"
-            if (thisType.contains("LEVEL0") && leaderType.contains("LEVEL3")) {
-            	// lower headway
-            	//TODO: values for lower TMIN values!!!
-            	double adjustedT = gtu.getParameters().getParameter(VehicleAutomationConfigurations.INITIAL_TMIN).si - drawFromDistribution(stream, 0.0, 0.15, 0.3);
-            	gtu.getParameters().setParameter(ParameterTypes.TMIN, Duration.instantiateSI(adjustedT));
-            }
-            // keep initial headway value whenever the leader type is not level-3
-            else {
-            	double initial_value = gtu.getParameters().getParameter(VehicleAutomationConfigurations.INITIAL_TMIN).si;
-            	gtu.getParameters().setParameter(ParameterTypes.TMIN, Duration.instantiateSI(initial_value));
-            }
-    	}
-    }
-    
-    
-    // class to change lane-change interactions between vehicle types
+	// class to change lane-change interactions between vehicle types
     public static class LaneChangingBehavior
     {
     	private long uniqueSeed;
@@ -126,4 +70,60 @@ public class VehicleBehaviourTowardsOthers {
             }
     	}
     }
+	
+	
+//	// class to change car-following interactions between vehicle types
+//    public static class CarFollowingBehavior
+//    {
+//    	private long uniqueSeed;
+//    	private LaneBasedGtu gtu;
+//    	private StreamInterface stream;
+//    	
+//    	public CarFollowingBehavior(LaneBasedGtu gtu) throws OperationalPlanException, ParameterException
+//    	{
+//    		// get gtu
+//    		this.gtu = gtu;
+//    		
+//    		// get simulator info
+//    		Duration simTime = gtu.getSimulator().getSimulatorTime();
+//    		StreamInterface simStream = gtu.getSimulator().getModel().getDefaultStream();
+//    		
+//    		// set unique seed (by simulation stream, simulation time, and vehicle id)
+//    		// this is necessary to draw different values for different GTUs and different times
+//    		// but keep reproducibility of the simulation
+//    		uniqueSeed = simStream.nextLong() + Double.doubleToLongBits(simTime.si) + Long.parseLong(gtu.getId());
+//    		StreamInterface stream = new MersenneTwister(Math.abs(uniqueSeed));
+//    		this.stream = stream;
+//    	}
+//    	
+//    	public void adaptToVehicleInFront() throws OperationalPlanException, ParameterException
+//    	{
+//    		// get vehicle in front
+//    		NeighborsPerception neighbors = gtu.getTacticalPlanner().getPerception().getPerceptionCategory(NeighborsPerception.class);
+//            PerceptionCollectable<HeadwayGtu, LaneBasedGtu> leaders = neighbors.getLeaders(RelativeLane.CURRENT);
+//            // only continue if leaders are present
+//            if (leaders.isEmpty()) {
+//            	return;
+//            }
+//            // get own gtu type
+//            String thisType = gtu.getParameters().getParameterOrNull(VehicleAutomationConfigurations.AUTOMATION_LEVEL);
+//            // get first leader
+//            HeadwayGtu gtuLeader = leaders.first();
+//            String leaderType = gtuLeader.getParameters().getParameterOrNull(VehicleAutomationConfigurations.AUTOMATION_LEVEL);
+//            // change behaviour if vehicle in front is of type Level-3 and this gtu is Level-0
+//            // example of gtu type string: "GtuType: NL.LEVEL3CAR"
+//            if (thisType.contains("LEVEL0") && leaderType.contains("LEVEL3")) {
+//            	// lower headway
+//            	//TODO: values for lower TMIN values!!!
+//            	double adjustedT = gtu.getParameters().getParameter(VehicleAutomationConfigurations.INITIAL_TMIN).si - drawFromDistribution(stream, 0.0, 0.15, 0.3);
+//            	gtu.getParameters().setParameter(ParameterTypes.TMIN, Duration.instantiateSI(adjustedT));
+//            }
+//            // keep initial headway value whenever the leader type is not level-3
+//            else {
+//            	double initial_value = gtu.getParameters().getParameter(VehicleAutomationConfigurations.INITIAL_TMIN).si;
+//            	gtu.getParameters().setParameter(ParameterTypes.TMIN, Duration.instantiateSI(initial_value));
+//            }
+//    	}
+//    }
+    
 }

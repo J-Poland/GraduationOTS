@@ -16,6 +16,8 @@ import org.opentrafficsim.road.gtu.lane.perception.categories.neighbors.TaskHead
 import org.opentrafficsim.road.gtu.lane.perception.headway.HeadwayGtu;
 import org.opentrafficsim.road.gtu.lane.perception.mental.AbstractTask;
 
+import sim.demo.vehicleconfigurations.VehicleAutomationConfigurations;
+
 /**
  * Car-following task demand based on headway.
  */
@@ -44,7 +46,13 @@ public class TaskCarFollowing extends AbstractTask
             NeighborsPerception neighbors = perception.getPerceptionCategory(NeighborsPerception.class);
             PerceptionCollectable<HeadwayGtu, LaneBasedGtu> leaders = neighbors.getLeaders(RelativeLane.CURRENT);
             Duration headway = leaders.collect(new TaskHeadwayCollector(gtu.getSpeed()));
-            return headway == null ? 0.0 : Math.exp(-headway.si / parameters.getParameter(HEXP).si);
+            double demand = headway == null ? 0.0 : Math.exp(-headway.si / parameters.getParameter(HEXP).si);
+            
+            // update task demand parameter
+            gtu.getParameters().setParameter(VehicleAutomationConfigurations.CF_TASK_DEMAND, demand);
+            
+            // return demand
+            return demand;
         }
         catch (OperationalPlanException ex)
         {

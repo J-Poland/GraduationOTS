@@ -19,6 +19,8 @@ class JavaManager:
         self.java_class_name = None
         self.output = None
 
+        self.compile('classpath.txt')
+
     def compile(self, classpath_file_path):
         # set Java strings
         java_compiler = 'javac'
@@ -86,10 +88,11 @@ class JavaManager:
 if __name__ == '__main__':
 
     # set Java file path
-    file_path = r'C:\Users\jesse\Documents\Java\TrafficSimulation-workspace' \
-                r'\traffic-sim\src\main\java\sim\demo\RunMyShortMerge.java'
+    file_path = r'C:\Users\jesse\Documents\Java\TrafficSimulation-LatestOTS-workspace\ots-demo\src' \
+                r'\main\java\org\opentrafficsim\demo\HumanFactorsDemo.java'
 
-    project_folder = r'C:\Users\jesse\Documents\Java\TrafficSimulation-workspace\traffic-sim\src\main\java\sim\demo'
+    project_folder = r'C:\Users\jesse\Documents\Java\TrafficSimulation-LatestOTS-workspace\ots-demo\src' \
+                r'\main\java\org\opentrafficsim\demo'
 
     # run simulation headless. With animation is still subject to errors, why?
     run_headless = 'true'

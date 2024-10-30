@@ -30,7 +30,7 @@ import sim.demo.vehicleconfigurations.VehicleAutomationConfigurations;
 public class CustomAdaptationSituationalAwareness extends AdaptationSituationalAwareness
 {
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
     public void adapt(final Parameters parameters, final double taskSaturation) throws ParameterException
     {
@@ -41,29 +41,10 @@ public class CustomAdaptationSituationalAwareness extends AdaptationSituationalA
         double saMax = parameters.getParameter(SA_MAX);
         double sa = taskSaturation < tsCrit ? saMax
                 : (taskSaturation >= tsMax ? saMin : saMax - (saMax - saMin) * (taskSaturation - tsCrit) / (tsMax - tsCrit));
-        
-        // new situational awareness
         parameters.setParameter(SA, sa);
-        // new reaction time
-        double newTr = calculateTr(parameters, sa, saMin, saMax);
-        parameters.setParameter(ParameterTypes.TR, Duration.instantiateSI(newTr));
-    }
-    
-    private double calculateTr(Parameters parameters, double sa, double saMin, double saMax) throws ParameterException {
-    	// get reaction time range
-    	double trMax = parameters.getParameter(VehicleAutomationConfigurations.MAX_TR).si;
-    	double trMin = parameters.getParameter(VehicleAutomationConfigurations.MIN_TR).si;
-    	
-    	// adapt reaction time only if minimum reaction time is lower than the maximum reaction time
-    	if (trMin < trMax) {
-    		// map sa range to tr
-    		double newTr = trMin + ((sa - saMin) / (saMax - saMin)) * (trMax - trMin);
-    		return newTr;
-    	}
-    	// otherwise return the max reaction time
-    	else {
-    		return trMax;
-    	}
+        // reaction time
+        double trMax = parameters.getParameterOrNull(VehicleAutomationConfigurations.MAX_TR).si;
+        parameters.setParameter(ParameterTypes.TR, Duration.instantiateSI(trMax * (saMax - sa)));
     }
 
 }

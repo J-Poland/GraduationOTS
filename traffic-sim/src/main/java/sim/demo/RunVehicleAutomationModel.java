@@ -39,13 +39,13 @@ public class RunVehicleAutomationModel implements Runnable
     @Option(names = "-mainDemand", description = "Traffic demand on main road.", defaultValue = "3000") // 2000
     private double mainDemand;
     
-    @Option(names = "-rampDemand", description = "Traffic demand for on-ramp.", defaultValue = "500") // 500
+    @Option(names = "-rampDemand", description = "Traffic demand for on-ramp.", defaultValue = "400") // 400
     private double rampDemand;
     
     @Option(names = "-inVehicleDistraction", description = "Enable in-vehicle distraction from secondary tasks.", negatable=false, defaultValue = "true")
     private boolean inVehicleDistraction;
     
-    @Option(names = "-roadSideDistraction", description = "Enable distraction at the side of the road.", negatable=false, defaultValue = "true")
+    @Option(names = "-roadSideDistraction", description = "Enable distraction at the side of the road.", negatable=false, defaultValue = "false")
     private boolean roadSideDistraction;
     
     @Option(names = "-sensitivityAnalysisValue", description = "Varying parameter value for sensitivity analysis.", defaultValue = "0")
@@ -53,7 +53,7 @@ public class RunVehicleAutomationModel implements Runnable
     
     
     @Option(names = "-outputFolderPath", description = "Folder location for simulation output storage.", 
-    		defaultValue = "C:\\Users\\jesse\\Documents\\Java\\TrafficSimulation-new-175-workspace\\traffic-sim\\"
+    		defaultValue = "C:\\Users\\jesse\\Documents\\Java\\TrafficSimulation-workspace\\traffic-sim\\"
     					   + "src\\main\\resources\\output")
     private String outputFolderPath;
     

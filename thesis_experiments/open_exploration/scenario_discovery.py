@@ -31,14 +31,18 @@ if __name__ == '__main__':
     prim_alg = prim.Prim(x, y, threshold=0.8, peel_alpha=0.1)
     box1 = prim_alg.find_box()
 
+    print(len(box1.peeling_trajectory))
+
     box1.show_tradeoff()
     plt.show()
 
-    box1.inspect(12)
-    box1.inspect(12, style="graph")
-    plt.show()
+    print(prim_alg.boxes_to_dataframe())
 
-    box1.show_pairs_scatter(12)
-    plt.show()
+    # box1.inspect(0)
+    # box1.inspect(0, style="graph")
+    # plt.show()
+    #
+    # box1.show_pairs_scatter(12)
+    # plt.show()
 
 
