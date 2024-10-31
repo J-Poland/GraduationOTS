@@ -38,7 +38,7 @@ class DualLogger:
 def define_policies():
     return [
         Policy('Policy 1', **{'level0_fraction': 1.0, 'level1_fraction': 0, 'level2_fraction': 0, 'level3_fraction': 0,
-                              'in_vehicle_distraction': True, 'road_side_distraction': False})
+                              'in_vehicle_distraction': True, 'road_side_distraction': False}),
     ]
 
 
@@ -68,8 +68,9 @@ def create_model(_seed):
     _policies = define_policies()
 
     # define model constants
-    _ema_model.constants = [Constant('warm_up_time', 200),
-                            Constant('sample_time', 1200)
+    _ema_model.constants = [Constant('warm_up_time', 0),
+                            Constant('sample_time', 1800),
+                            Constant('sensitivity_analysis_value', 0)
                             ]  # 28800 = 8 hours of traffic simulation, 1800 = 30 min
 
     # define levers outside of policies
@@ -83,14 +84,14 @@ def create_model(_seed):
         _policies = add_levers_to_policies(_policies, lhs_samples_dict, samples_per_parameter)
 
     # define uncertain variables
-    _ema_model.uncertainties = [RealParameter('main_demand', 3864, 5796),
-                                RealParameter('ramp_demand', 500, 2250)]
+    _ema_model.uncertainties = [RealParameter('main_demand', 2000, 4000),
+                                RealParameter('ramp_demand', 200, 800)]
 
     # list outcome variables of interest
-    _ema_model.outcomes = [ScalarOutcome('mean_density'),
-                           ScalarOutcome('mean_flow'),
-                           ScalarOutcome('mean_speed'),
-                           ScalarOutcome('mean_travel_time')]
+    _ema_model.outcomes = [ScalarOutcome('collisions'),
+                           ScalarOutcome('travel_time'),
+                           ScalarOutcome('main_travel_time'),
+                           ScalarOutcome('ramp_travel_time')]
 
     return _ots_model, _ema_model, _policies
 
@@ -99,12 +100,12 @@ def create_model(_seed):
 if __name__ == '__main__':
 
     # experiment name and number
-    experiment_string = 'full_level_runs'
-    experiment_number = 0
+    experiment_string = 'explore_demand'
+    experiment_number = 1
     experiment_name = f'{experiment_string}_{experiment_number}'
 
     # create folder for experiment results
-    results_dir = fr'results'
+    results_dir = fr'../experiment_runs/results'
     results_name = f'{experiment_string}_results_v{experiment_number}'
     results_folder = os.path.join(results_dir, f'{results_name}')
 
@@ -120,19 +121,21 @@ if __name__ == '__main__':
     print(f'{datetime.now().time().strftime("%H:%M:%S")}: '
           f'Simulation of the {experiment_name} experiment has started.')
 
-    # run experiments for multiple seeds
-    seeds = [0, 1, 2, 3]
+    # run the traffic simulation for multiple seeds
+    # (but ensure that the selection of uncertainty/levers values is not affected)
+    ema_seed = 0
+    model_seeds = [0, 1, 2, 3]
     # select scenarios per policy
-    num_scenarios = 10
-    for seed in seeds:
+    num_scenarios = 20
+    for seed in model_seeds:
         print('\n'
               f'{datetime.now().time().strftime("%H:%M:%S")}: '
-              f'Run experiment for seed {seed}:\n')
+              f'Run experiment for traffic simulation seed {seed} (ema_seed={ema_seed}):\n')
 
         # ensure reproducibility
         # otherwise the EMA workbench can provide different input values for the same seed
-        random.seed = seed
-        np.random.seed(seed)
+        random.seed(ema_seed)
+        np.random.seed(ema_seed)
 
         # create and compile Java model
         ots_model, ema_model, policies = create_model(seed)
@@ -161,7 +164,7 @@ if __name__ == '__main__':
 
         # show successful save of results
         print(f'{datetime.now().time().strftime("%H:%M:%S")}: '
-              f'Runs for seed {seed} completed! Still {len(seeds) - 1} seeds to go...')
+              f'Runs for seed {seed} completed! Still {len(model_seeds) - 1} seeds to go...')
         print(f'\nThe experiment results are successfully saved to:')
         print(f'{results_path}')
 

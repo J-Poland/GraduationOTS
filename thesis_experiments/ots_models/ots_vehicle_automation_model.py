@@ -28,11 +28,11 @@ class VehicleAutomationModel:
                               r'\traffic-sim\src\main\java\sim\demo\RunVehicleAutomationModel.java'
 
         # set Java folder path (for compilation of required Java classes)
-        self.java_project_folder = r'C:\Users\jesse\Documents\Java\TrafficSimulation-new-175-workspace' \
+        self.java_project_folder = r'C:\Users\jesse\Documents\Java\TrafficSimulation-workspace' \
                                    r'\traffic-sim\src\main\java\sim\demo'
 
         # output data folder
-        self.output_parent_folder = r'C:\Users\jesse\Documents\Java\TrafficSimulation-new-175-workspace' \
+        self.output_parent_folder = r'C:\Users\jesse\Documents\Java\TrafficSimulation-workspace' \
                                     r'\traffic-sim\src\main\resources'
         self.output_folder = None
         self.generate_output_folder()
