@@ -945,7 +945,7 @@ public class VehicleAutomationModel extends AbstractOtsModel implements EventLis
 		double travelTime = removeTime - addTime;
 		
 		// save value
-		outputDataManager.addToMeanList("mean_travel_time", travelTime);
+		outputDataManager.addToMeanList("travel_time", travelTime);
 		
 		// this GTU is removed from the simulation, so can also be removed from the maps
 		gtuAddTimesMap.remove(gtuId);
@@ -971,7 +971,7 @@ public class VehicleAutomationModel extends AbstractOtsModel implements EventLis
 		double travelTime = removeTime - addTime;
 		
 		// save value
-		outputDataManager.addToMeanList("mean_main_travel_time", travelTime);
+		outputDataManager.addToMeanList("main_travel_time", travelTime);
 		
 		// this GTU is removed from the simulation, so can also be removed from the maps
 		mainGtuAddTimesMap.remove(gtuId);
@@ -999,7 +999,7 @@ public class VehicleAutomationModel extends AbstractOtsModel implements EventLis
 		double travelTime = removeTime - addTime;
 		
 		// save value
-		outputDataManager.addToMeanList("mean_ramp_travel_time", travelTime);
+		outputDataManager.addToMeanList("ramp_travel_time", travelTime);
 		
 		// this GTU is removed from the simulation, so can also be removed from the maps
 		rampGtuAddTimesMap.remove(gtuId);
@@ -1052,9 +1052,9 @@ public class VehicleAutomationModel extends AbstractOtsModel implements EventLis
 	        		continue; // go to next calculated value
 	        	}
 	        	
-	        	outputDataManager.addToMeanList((this.source.getName(sourceNumber) + "_mean_speed"), this.source.getSpeed(sourceNumber, i));
-	        	outputDataManager.addToMeanList((this.source.getName(sourceNumber) + "_mean_density"), this.source.getDensity(sourceNumber, i));
-	        	outputDataManager.addToMeanList((this.source.getName(sourceNumber) + "_mean_flow"), this.source.getFlow(sourceNumber, i));
+	        	outputDataManager.addToMeanList((this.source.getName(sourceNumber) + "_speed"), this.source.getSpeed(sourceNumber, i));
+	        	outputDataManager.addToMeanList((this.source.getName(sourceNumber) + "_density"), this.source.getDensity(sourceNumber, i));
+	        	outputDataManager.addToMeanList((this.source.getName(sourceNumber) + "_flow"), this.source.getFlow(sourceNumber, i));
 	        }
     	}
     }
