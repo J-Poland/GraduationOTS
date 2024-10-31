@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.djunits.unit.DurationUnit;
 import org.djunits.unit.FrequencyUnit;
 import org.djunits.unit.SpeedUnit;
 import org.djunits.unit.TimeUnit;
@@ -297,12 +298,13 @@ public class VehicleAutomationModel extends AbstractOtsModel implements EventLis
 			createSampler();
 			
 			// setup FD source
-			Duration updateInterval = Duration.instantiateSI(0.5);
+			Duration aggregationPeriod = Duration.instantiateSI(30.0, DurationUnit.SECOND);
 			individualSources = new LinkedHashMap<String, FdSource>();
-			createNetworkFdSources(updateInterval);
+			createNetworkFdSources(aggregationPeriod);
 	        
 	        // sample simulation data throughout the simulation
-	        sampleData(updateInterval, false);
+			Duration sampleInterval = Duration.instantiateSI(0.5, DurationUnit.SECOND);
+	        sampleData(sampleInterval, false);
 	        
 	        // detect collisions in network
 	        new CollisionDetector(this.network);
@@ -726,7 +728,7 @@ public class VehicleAutomationModel extends AbstractOtsModel implements EventLis
      * Method to create sources for network Fundamental Diagram calculations.
      * @param updateInterval Duration;
      */
-    private void createNetworkFdSources(Duration updateInterval)
+    private void createNetworkFdSources(Duration aggregationPeriod)
     {	
     	// collect all network links
         List<CrossSectionLink> allLinks = new ArrayList<>();
@@ -763,7 +765,7 @@ public class VehicleAutomationModel extends AbstractOtsModel implements EventLis
             List<Section<LaneDataRoad>> individualSectionList = new ArrayList<>();
             individualSectionList.add(section);
             GraphPath<LaneDataRoad> individualGraphPath = new GraphPath<LaneDataRoad>(laneData.getLane().getFullId(), individualSectionList);
-            FdSource individualSource = FundamentalDiagram.sourceFromSampler(sampler, individualGraphPath, true, updateInterval);
+            FdSource individualSource = FundamentalDiagram.sourceFromSampler(sampler, individualGraphPath, true, aggregationPeriod);
             this.individualSources.put(laneData.getLane().getFullId(), individualSource);
         }
 
@@ -1031,33 +1033,30 @@ public class VehicleAutomationModel extends AbstractOtsModel implements EventLis
      */
     private void storeFdValues()
     {
-        // get last calculated index
-        int latestIndex = this.source.getItemCount(0);
-        if (latestIndex > 0) {
-        	latestIndex -= 1;
-        }
-        
-        // process all calculated values
-        for (int i = 0; i < latestIndex; i++) {
-        	outputDataManager.addToMeanList("mean_speed", this.source.getSpeed(0, i));
-        	outputDataManager.addToMeanList("mean_density", this.source.getDensity(0, i));
-        	outputDataManager.addToMeanList("mean_flow", this.source.getFlow(0, i));
-        }
-        
-        // repeat this for individual sources
-        for (String laneString : this.individualSources.keySet()) {
-        	FdSource laneSource = this.individualSources.get(laneString);
-        	latestIndex = laneSource.getItemCount(0);
-            if (latestIndex > 0) {
-            	latestIndex -= 1;
-            }
-        	
-        	for (int i = 0; i < latestIndex; i++) {
-            	outputDataManager.addToMeanList(laneString + "_mean_speed", laneSource.getSpeed(0, i));
-            	outputDataManager.addToMeanList(laneString + "_mean_density", laneSource.getDensity(0, i));
-            	outputDataManager.addToMeanList(laneString + "_mean_flow", laneSource.getFlow(0, i));
-            }
-        }
+    	// get individual sources from the combined FD source
+    	// each individual source has a Series of data in the combined source
+    	int numberOfSources = this.source.getNumberOfSeries();
+    	
+    	// loop through them and save their calculated values for speed, density and flow
+    	for (int sourceNumber = 0; sourceNumber < numberOfSources; sourceNumber++) {
+    		// get number of values calculated in a source
+	        int latestIndex = this.source.getItemCount(sourceNumber);
+	        if (latestIndex > 0) {
+	        	latestIndex -= 1;
+	        }
+	        // process all calculated values after the warm-up time
+	        for (int i = 0; i < latestIndex; i++) {
+	        	double aggregationPeriod = this.source.getAggregationPeriod().si;
+	        	double timeOfCalculation = aggregationPeriod * i;
+	        	if (timeOfCalculation < warmUpTime.si) {
+	        		continue; // go to next calculated value
+	        	}
+	        	
+	        	outputDataManager.addToMeanList((this.source.getName(sourceNumber) + "_mean_speed"), this.source.getSpeed(sourceNumber, i));
+	        	outputDataManager.addToMeanList((this.source.getName(sourceNumber) + "_mean_density"), this.source.getDensity(sourceNumber, i));
+	        	outputDataManager.addToMeanList((this.source.getName(sourceNumber) + "_mean_flow"), this.source.getFlow(sourceNumber, i));
+	        }
+    	}
     }
     
     

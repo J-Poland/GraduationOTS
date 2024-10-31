@@ -36,7 +36,7 @@ public class RunVehicleAutomationModel implements Runnable
     @Option(names = "-level3Fraction", description = "Fraction of level 3 vehicles.", defaultValue = "0.25")
     private double level3Fraction;
     
-    @Option(names = "-mainDemand", description = "Traffic demand on main road.", defaultValue = "3000") // 2000
+    @Option(names = "-mainDemand", description = "Traffic demand on main road.", defaultValue = "1000") // 2000
     private double mainDemand;
     
     @Option(names = "-rampDemand", description = "Traffic demand for on-ramp.", defaultValue = "400") // 400
