@@ -37,7 +37,6 @@ import org.opentrafficsim.core.gtu.GtuException;
 import org.opentrafficsim.core.gtu.GtuType;
 import org.opentrafficsim.core.gtu.perception.DirectEgoPerception;
 import org.opentrafficsim.core.gtu.plan.operational.OperationalPlanException;
-import org.opentrafficsim.core.network.LateralDirectionality;
 import org.opentrafficsim.core.network.Link;
 import org.opentrafficsim.core.network.Network;
 import org.opentrafficsim.core.network.NetworkException;
@@ -85,7 +84,6 @@ import org.opentrafficsim.road.gtu.lane.tactical.lmrs.IncentiveSpeedWithCourtesy
 import org.opentrafficsim.road.gtu.lane.tactical.lmrs.LmrsFactory;
 import org.opentrafficsim.road.gtu.lane.tactical.util.lmrs.Cooperation;
 import org.opentrafficsim.road.gtu.lane.tactical.util.lmrs.GapAcceptance;
-import org.opentrafficsim.road.gtu.lane.tactical.util.lmrs.LmrsParameters;
 import org.opentrafficsim.road.gtu.lane.tactical.util.lmrs.MandatoryIncentive;
 import org.opentrafficsim.road.gtu.lane.tactical.util.lmrs.Synchronization;
 import org.opentrafficsim.road.gtu.lane.tactical.util.lmrs.Tailgating;
@@ -118,6 +116,7 @@ import sim.demo.mental.CustomAdaptationSpeed;
 import sim.demo.mental.TaskCarFollowing;
 import sim.demo.mental.TaskLaneChange;
 import sim.demo.mental.TaskManagerAr;
+
 import sim.demo.vehicleconfigurations.VehicleAutomationConfigurations;
 
 
@@ -197,13 +196,17 @@ public class VehicleAutomationModel extends AbstractOtsModel implements EventLis
  	/** Synchronisation. */
  	static final Synchronization synchronizationMethod = Synchronization.PASSIVE;
 
- 	/** Cooperation. */
+ 	/** Cooperation. 
+ 	 *  Custom class to adapt cooperation threshold of level 0 vehicles based on their surroundings.
+ 	 */
  	static final Cooperation cooperationMethod = CustomCooperation.PASSIVE_MOVING;
  	
  	/** GapAcceptance. */
  	static final GapAcceptance gapAcceptanceMethod= GapAcceptance.INFORMED;
  	
- 	/** Tailgating. */
+ 	/** Tailgating. 
+ 	 *  Custom class to disable tailgating for GTUs with automated car-following.
+ 	 */
  	static final Tailgating tailgatingMethod = CustomTailgating.PRESSURE_HUMAN;
  	
  	/** Estimation. */

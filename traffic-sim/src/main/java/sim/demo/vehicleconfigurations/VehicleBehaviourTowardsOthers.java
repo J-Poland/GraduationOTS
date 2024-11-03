@@ -9,6 +9,7 @@ import org.opentrafficsim.road.gtu.lane.perception.PerceptionCollectable;
 import org.opentrafficsim.road.gtu.lane.perception.RelativeLane;
 import org.opentrafficsim.road.gtu.lane.perception.categories.neighbors.NeighborsPerception;
 import org.opentrafficsim.road.gtu.lane.perception.headway.HeadwayGtu;
+import org.opentrafficsim.road.gtu.lane.tactical.util.lmrs.LmrsParameters;
 
 import nl.tudelft.simulation.jstats.distributions.DistTriangular;
 import nl.tudelft.simulation.jstats.streams.MersenneTwister;
@@ -41,7 +42,7 @@ public class VehicleBehaviourTowardsOthers {
             // change behaviour parameter value if other GTU is of type level-3 and this GTU is level-0
             // example of GTU type string: "GtuType: NL.LEVEL3CAR"
             if (thisType.contains("LEVEL0") && leaderType.contains("LEVEL3")) {
-            	double social_lc = gtu.getParameters().getParameter(VehicleAutomationConfigurations.SOCIO_LANE);
+            	double social_lc = gtu.getParameters().getParameter(LmrsParameters.SOCIO);
             	return social_lc;
             }
             // not found? return 0.0, no influence from traffic

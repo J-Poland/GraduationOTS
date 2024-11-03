@@ -48,7 +48,7 @@ public class VehicleAutomationConfigurations extends Defaults implements BiFunct
     public static final ParameterTypeString ORIGIN = new ParameterTypeString("ORIGIN", "Node on which the GTU was generated.");
     public static final ParameterTypeDuration INITIAL_TMIN = new ParameterTypeDuration("INITIAL_TMIN", "Initial minimal headway time.");
     public static final ParameterTypeDuration MAX_TR = new ParameterTypeDuration("MAX_TR", "Custom parameter for maximum reaction time.");
-    public static final ParameterTypeDouble SOCIO_LANE = new ParameterTypeDouble("SOCIO_LANE", "Social parameter for lane changing.");
+    public static final ParameterTypeDouble SOCIO_CF = new ParameterTypeDouble("SOCIO_CF", "Social parameter for car-following.");
     public static final ParameterTypeDouble CF_TASK_DEMAND = new ParameterTypeDouble("CF_TASK_DEMAND", "Car-following cognitive task demand.");
     public static final ParameterTypeDouble LC_TASK_DEMAND = new ParameterTypeDouble("LC_TASK_DEMAND", "Lane-chaning cognitive task demand.");
     public static final ParameterTypeBoolean SECONDARY_TASK_DISTRACTED = new ParameterTypeBoolean("SECONDARY_TASK_DISTRACTED", "Secondary task demand.");
@@ -241,8 +241,8 @@ public class VehicleAutomationConfigurations extends Defaults implements BiFunct
 			paramFactory.addParameter(gtuType, ParameterTypes.LOOKAHEAD, lookAheadValues[i]);
 			paramFactory.addParameter(gtuType, ParameterTypes.LOOKBACK, lookBackValues[i]);
 			// affected by other vehicles
+			paramFactory.addParameter(gtuType, SOCIO_CF, 0.5);
 			paramFactory.addParameter(gtuType, LmrsParameters.SOCIO, 0.5); 
-			paramFactory.addParameter(gtuType, SOCIO_LANE, 0.5); 
 			paramFactory.addParameter(gtuType, Tailgating.RHO, 0.0);
 			// perception
             paramFactory.addParameter(ParameterTypes.PERCEPTION, ParameterTypes.PERCEPTION.getDefaultValue());
@@ -295,10 +295,10 @@ public class VehicleAutomationConfigurations extends Defaults implements BiFunct
 				new DistTriangular(stream, 0.95, 1.0, 1.05)};
 		
 		// social (rho values are set dynamically in tailgating class)
-		DistTriangular humanSocioValues = new DistTriangular(stream, 0, 0.5, 1.0);
-		DistTriangular humanSocioLaneValues = new DistTriangular(stream, 0, 0.5, 1.0);
-		double automatedSocioValue = 0.0;
-		double automatedSocioLaneValue = 0.0;
+		DistTriangular humanSocioCarFollowingValues = new DistTriangular(stream, 0, 0.5, 1.0);
+		DistTriangular humanSocioLaneChangingValues = new DistTriangular(stream, 0, 0.5, 1.0);
+		double automatedSocioCarFollowingValue = 0.0;
+		double automatedSocioLaneChangingValue = 0.0;
 		
 		// Task capacity for human drivers
 		DistTriangular humanTaskCapacityValues = new DistTriangular(stream, 0.9, 1.0, 1.1);
@@ -315,27 +315,27 @@ public class VehicleAutomationConfigurations extends Defaults implements BiFunct
 		else if (typeIndex == 0) {
 			// set parameters for this GTU type
 			gtuParameters.setParameter(ParameterTypes.FSPEED, fSpeedValues[typeIndex].draw());
-			gtuParameters.setParameter(LmrsParameters.SOCIO, humanSocioValues.draw());
-			gtuParameters.setParameter(SOCIO_LANE, humanSocioLaneValues.draw());
+			gtuParameters.setParameter(SOCIO_CF, humanSocioCarFollowingValues.draw());
+			gtuParameters.setParameter(LmrsParameters.SOCIO, humanSocioLaneChangingValues.draw());
 			gtuParameters.setParameter(Fuller.TC, humanTaskCapacityValues.draw());
 		}
 		else if (typeIndex == 1) {
 			// set parameters for this GTU type
 			gtuParameters.setParameter(ParameterTypes.FSPEED, fSpeedValues[typeIndex].draw());
-			gtuParameters.setParameter(LmrsParameters.SOCIO, automatedSocioValue);
-			gtuParameters.setParameter(SOCIO_LANE, humanSocioLaneValues.draw());
+			gtuParameters.setParameter(SOCIO_CF, automatedSocioCarFollowingValue);
+			gtuParameters.setParameter(LmrsParameters.SOCIO, humanSocioLaneChangingValues.draw());
 		}
 		else if (typeIndex == 2) {
 			// set parameters for this GTU type
 			gtuParameters.setParameter(ParameterTypes.FSPEED, fSpeedValues[typeIndex].draw());
-			gtuParameters.setParameter(LmrsParameters.SOCIO, automatedSocioValue);
-			gtuParameters.setParameter(SOCIO_LANE, automatedSocioLaneValue);
+			gtuParameters.setParameter(SOCIO_CF, automatedSocioCarFollowingValue);
+			gtuParameters.setParameter(LmrsParameters.SOCIO, automatedSocioLaneChangingValue);
 		}
 		else if (typeIndex == 3) {
 			// set parameters for this GTU type
 			gtuParameters.setParameter(ParameterTypes.FSPEED, fSpeedValues[typeIndex].draw());
-			gtuParameters.setParameter(LmrsParameters.SOCIO, automatedSocioValue);
-			gtuParameters.setParameter(SOCIO_LANE, automatedSocioLaneValue);
+			gtuParameters.setParameter(SOCIO_CF, automatedSocioCarFollowingValue);
+			gtuParameters.setParameter(LmrsParameters.SOCIO, automatedSocioLaneChangingValue);
 		}
 		
 		// return new parameter values

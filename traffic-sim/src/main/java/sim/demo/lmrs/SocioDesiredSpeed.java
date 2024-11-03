@@ -17,6 +17,8 @@ import org.opentrafficsim.road.gtu.lane.tactical.util.lmrs.LmrsParameters;
 import org.opentrafficsim.road.gtu.lane.tactical.util.lmrs.Tailgating;
 import org.opentrafficsim.road.network.speed.SpeedLimitInfo;
 
+import sim.demo.vehicleconfigurations.VehicleAutomationConfigurations;
+
 /**
  * Wrapper of a base-desired speed model. The speed may be increased due to social pressure from the follower.
  * <p>
@@ -35,7 +37,7 @@ public class SocioDesiredSpeed implements DesiredSpeedModel, Initialisable
     protected static final ParameterTypeDouble RHO = Tailgating.RHO;
 
     /** Socio-speed sensitivity parameter. */
-    protected static final ParameterTypeDouble SOCIO = LmrsParameters.SOCIO;
+    protected static final ParameterTypeDouble SOCIO_CF = VehicleAutomationConfigurations.SOCIO_CF;
 
     /** Vgain parameter; ego-speed sensitivity. */
     protected static final ParameterTypeSpeed VGAIN = LmrsParameters.VGAIN;
@@ -82,7 +84,7 @@ public class SocioDesiredSpeed implements DesiredSpeedModel, Initialisable
             followers = neighbors.getFollowers(RelativeLane.CURRENT);
             if (!followers.isEmpty())
             {
-                double sigma = parameters.getParameter(SOCIO);
+                double sigma = parameters.getParameter(SOCIO_CF);
                 Speed vGain = parameters.getParameter(VGAIN);
                 HeadwayGtu follower = followers.first();
                 double rhoFollower = follower.getParameters().getParameter(RHO);
