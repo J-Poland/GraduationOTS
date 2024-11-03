@@ -28,7 +28,6 @@ import org.opentrafficsim.core.distributions.ConstantGenerator;
 import org.opentrafficsim.core.gtu.GtuTemplate;
 import org.opentrafficsim.core.gtu.GtuType;
 import org.opentrafficsim.core.parameters.ParameterFactoryByType;
-import org.opentrafficsim.core.units.distributions.ContinuousDistSpeed;
 import org.opentrafficsim.road.gtu.lane.perception.categories.neighbors.Estimation;
 import org.opentrafficsim.road.gtu.lane.perception.mental.AdaptationHeadway;
 import org.opentrafficsim.road.gtu.lane.perception.mental.AdaptationSituationalAwareness;
@@ -37,7 +36,6 @@ import org.opentrafficsim.road.gtu.lane.perception.mental.Fuller;
 import org.opentrafficsim.road.gtu.lane.tactical.util.lmrs.LmrsParameters;
 import org.opentrafficsim.road.gtu.lane.tactical.util.lmrs.Tailgating;
 
-import nl.tudelft.simulation.jstats.distributions.DistLogNormal;
 import nl.tudelft.simulation.jstats.distributions.DistTriangular;
 import nl.tudelft.simulation.jstats.streams.StreamInterface;
 import sim.demo.mental.TaskCarFollowing;
@@ -55,6 +53,8 @@ public class VehicleAutomationConfigurations extends Defaults implements BiFunct
     public static final ParameterTypeDouble LC_TASK_DEMAND = new ParameterTypeDouble("LC_TASK_DEMAND", "Lane-chaning cognitive task demand.");
     public static final ParameterTypeBoolean SECONDARY_TASK_DISTRACTED = new ParameterTypeBoolean("SECONDARY_TASK_DISTRACTED", "Secondary task demand.");
     public static final ParameterTypeBoolean ROAD_SIDE_DISTRACTED = new ParameterTypeBoolean("ROAD_SIDE_DISTRACTED", "Road side distraction demand.");
+    public static final ParameterTypeBoolean IN_BETWEEN_LEVEL3 = new ParameterTypeBoolean("IN_BETWEEN_LEVEL3", "Is this GTU surrounded by level 3 vehicles.");
+    public static final ParameterTypeDuration TMIN_LEVEL3 = new ParameterTypeDuration("TMIN_LEVEL3", "Minimum time headway of level 3 vehicles.");
 	
 	/** Vehicle types. */
 	public static final GtuType LEVEL0_CAR = new GtuType("NL.LEVEL0CAR", DefaultsNl.CAR);
@@ -268,6 +268,9 @@ public class VehicleAutomationConfigurations extends Defaults implements BiFunct
 			paramFactory.addParameter(gtuType, SECONDARY_TASK_DISTRACTED, false);
 			// road side distraction demand
 			paramFactory.addParameter(gtuType, ROAD_SIDE_DISTRACTED, false);
+			// parameters to enable level 0 vehicles to adapt headway settings to level 3 vehicles
+			paramFactory.addParameter(gtuType, IN_BETWEEN_LEVEL3, false);
+			paramFactory.addParameter(gtuType, TMIN_LEVEL3, tMinValues[3]);
 			
 			// increase index
 			i += 1;
@@ -296,6 +299,9 @@ public class VehicleAutomationConfigurations extends Defaults implements BiFunct
 		DistTriangular humanSocioLaneValues = new DistTriangular(stream, 0, 0.5, 1.0);
 		double automatedSocioValue = 0.0;
 		double automatedSocioLaneValue = 0.0;
+		
+		// Task capacity for human drivers
+		DistTriangular humanTaskCapacityValues = new DistTriangular(stream, 0.9, 1.0, 1.1);
 				
 		
 		
@@ -311,6 +317,7 @@ public class VehicleAutomationConfigurations extends Defaults implements BiFunct
 			gtuParameters.setParameter(ParameterTypes.FSPEED, fSpeedValues[typeIndex].draw());
 			gtuParameters.setParameter(LmrsParameters.SOCIO, humanSocioValues.draw());
 			gtuParameters.setParameter(SOCIO_LANE, humanSocioLaneValues.draw());
+			gtuParameters.setParameter(Fuller.TC, humanTaskCapacityValues.draw());
 		}
 		else if (typeIndex == 1) {
 			// set parameters for this GTU type

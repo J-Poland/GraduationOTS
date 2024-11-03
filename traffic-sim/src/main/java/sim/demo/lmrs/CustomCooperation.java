@@ -68,15 +68,9 @@ public interface CustomCooperation extends Cooperation
                 
             	// add laneChangeBehaviour class to adjust vehicle interactions
             	LaneChangingBehavior laneChangeBehavior = null;
-				try {
-					laneChangeBehavior = new LaneChangingBehavior(perception.getGtu());
-				} catch (OperationalPlanException e) {
-					e.printStackTrace();
-				} catch (ParameterException e) {
-					e.printStackTrace();
-				}
+				laneChangeBehavior = new LaneChangingBehavior(perception.getGtu());
                 
-                // adjust DCOOP to leader type
+                // adjust DCOOP value according to leader type
                 if (laneChangeBehavior != null) {
                 	double adjustment = laneChangeBehavior.adaptToLaneChangingVehicle(leader);
                 	if (desire >= (dCoop + adjustment) && (leader.getSpeed().gt0() || leader.getDistance().gt0())
@@ -86,15 +80,6 @@ public interface CustomCooperation extends Cooperation
                                 desire, params, sli, cfm);
                         a = Acceleration.min(a, aSingle);
                     }
-                }
-                
-                // behaviour class not created? perform normal logic
-                else if (desire >= dCoop && (leader.getSpeed().gt0() || leader.getDistance().gt0())
-                        && (leader.getSpeed().ge(thresholdSpeed) || leaderInCongestion))
-                {
-                    Acceleration aSingle = LmrsUtil.singleAcceleration(leader.getDistance(), ownSpeed, leader.getSpeed(),
-                            desire, params, sli, cfm);
-                    a = Acceleration.min(a, aSingle);
                 }
             }
             return Acceleration.max(a, bCrit.neg());

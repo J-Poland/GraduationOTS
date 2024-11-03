@@ -37,6 +37,7 @@ import org.opentrafficsim.core.gtu.GtuException;
 import org.opentrafficsim.core.gtu.GtuType;
 import org.opentrafficsim.core.gtu.perception.DirectEgoPerception;
 import org.opentrafficsim.core.gtu.plan.operational.OperationalPlanException;
+import org.opentrafficsim.core.network.LateralDirectionality;
 import org.opentrafficsim.core.network.Link;
 import org.opentrafficsim.core.network.Network;
 import org.opentrafficsim.core.network.NetworkException;
@@ -84,6 +85,7 @@ import org.opentrafficsim.road.gtu.lane.tactical.lmrs.IncentiveSpeedWithCourtesy
 import org.opentrafficsim.road.gtu.lane.tactical.lmrs.LmrsFactory;
 import org.opentrafficsim.road.gtu.lane.tactical.util.lmrs.Cooperation;
 import org.opentrafficsim.road.gtu.lane.tactical.util.lmrs.GapAcceptance;
+import org.opentrafficsim.road.gtu.lane.tactical.util.lmrs.LmrsParameters;
 import org.opentrafficsim.road.gtu.lane.tactical.util.lmrs.MandatoryIncentive;
 import org.opentrafficsim.road.gtu.lane.tactical.util.lmrs.Synchronization;
 import org.opentrafficsim.road.gtu.lane.tactical.util.lmrs.Tailgating;
@@ -196,7 +198,7 @@ public class VehicleAutomationModel extends AbstractOtsModel implements EventLis
  	static final Synchronization synchronizationMethod = Synchronization.PASSIVE;
 
  	/** Cooperation. */
- 	static final Cooperation cooperationMethod = CustomCooperation.PASSIVE;
+ 	static final Cooperation cooperationMethod = CustomCooperation.PASSIVE_MOVING;
  	
  	/** GapAcceptance. */
  	static final GapAcceptance gapAcceptanceMethod= GapAcceptance.INFORMED;
@@ -508,6 +510,26 @@ public class VehicleAutomationModel extends AbstractOtsModel implements EventLis
 					e.printStackTrace();
 				}
 			};
+			
+			// update GTU IN_BETWEEN_LEVEL3 parameter based on surroundings
+			try {
+				gtu.getParameters().setParameter(VehicleAutomationConfigurations.IN_BETWEEN_LEVEL3, false);
+				
+				PerceptionCollectable<HeadwayGtu, LaneBasedGtu> followers = gtu.getTacticalPlanner().getPerception().getPerceptionCategory(NeighborsPerception.class).getFollowers(RelativeLane.CURRENT);
+				PerceptionCollectable<HeadwayGtu, LaneBasedGtu> leaders = gtu.getTacticalPlanner().getPerception().getPerceptionCategory(NeighborsPerception.class).getLeaders(RelativeLane.CURRENT);
+				
+				if (!followers.isEmpty() && !leaders.isEmpty()) {
+					HeadwayGtu followerHeadwayGtu = followers.first();
+					String followerType = followerHeadwayGtu.getParameters().getParameter(VehicleAutomationConfigurations.AUTOMATION_LEVEL);
+					HeadwayGtu leaderHeadwayGtu = leaders.first();
+					String leaderType = leaderHeadwayGtu.getParameters().getParameter(VehicleAutomationConfigurations.AUTOMATION_LEVEL);
+				
+					boolean inBetweenLevel3 = (followerType.contains("LEVEL3") && leaderType.contains("LEVEL3")) ? true : false;
+					gtu.getParameters().setParameter(VehicleAutomationConfigurations.IN_BETWEEN_LEVEL3, inBetweenLevel3);
+				}
+			} catch (ParameterException | NullPointerException | IllegalArgumentException | OperationalPlanException e) {
+				e.printStackTrace();
+			}
 		}
 		
 		if (event.getType().equals(LaneBasedGtu.LANEBASED_MOVE_EVENT)) {
@@ -1441,7 +1463,11 @@ public class VehicleAutomationModel extends AbstractOtsModel implements EventLis
                 	// count collision
                     outputDataManager.increaseSingleCount("collisions");
                     // show error
-                    System.err.println("GTU " + gtu.getId() + " collided with GTU " + leader.getObject().getId());
+                    System.err.println("GTU " + gtu.getId() + " collided with GTU " + leader.getObject().getId() + 
+                    		           " - GTU " + gtu.getId() + " will be removed from the simulation.");
+                    // remove collided GTU to prevent unrealistic collisions with others
+                    // this is necessary since vehicles tend to overlap for the rest of their trip
+                    // also the collisions causes problems in perceptions of GTUs who later perceive the collided GTU
                     gtu.destroy();
                 }
             }

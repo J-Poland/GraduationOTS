@@ -6,6 +6,7 @@ import org.opentrafficsim.base.parameters.ParameterTypes;
 import org.opentrafficsim.base.parameters.Parameters;
 import org.opentrafficsim.road.gtu.lane.perception.mental.AdaptationHeadway;
 import org.opentrafficsim.road.gtu.lane.perception.mental.Fuller;
+import org.opentrafficsim.road.gtu.lane.tactical.util.lmrs.LmrsParameters;
 
 import sim.demo.vehicleconfigurations.VehicleAutomationConfigurations;
 
@@ -39,11 +40,26 @@ public class CustomAdaptationHeadway extends AdaptationHeadway
 	            this.t0Min = parameters.getParameterOrNull(ParameterTypes.TMIN);
 	            this.t0Max = parameters.getParameterOrNull(ParameterTypes.TMAX);
 	        }
+	        
 	        double eps = parameters.getParameter(Fuller.TS) - parameters.getParameter(Fuller.TS_CRIT);
 	        eps = eps < 0.0 ? 0.0 : (eps > 1.0 ? 1.0 : eps);
 	        double factor = 1.0 + parameters.getParameter(BETA_T) * eps;
 	        Duration tMin = this.t0Min.times(factor);
 	        Duration tMax = this.t0Max.times(factor);
+	        
+	        
+	        // account for human headway adaptations around level-3 vehicles
+	        // base headway settings on own Tmin and level 3 Tmin
+	        boolean inBetweenLevel3 = parameters.getParameter(VehicleAutomationConfigurations.IN_BETWEEN_LEVEL3);
+	        // only adapt when the GTU is surrounded by level 3
+	        if (inBetweenLevel3) {
+		        Duration tMinLevel3 = parameters.getParameter(VehicleAutomationConfigurations.TMIN_LEVEL3);
+	        	double socio = parameters.getParameter(LmrsParameters.SOCIO);
+	        	// interpolating between tMin and tMinLevel3 based on socio parameter
+	            tMin = tMin.times(1 - socio).plus(tMinLevel3.times(socio));
+	        }
+	        
+	        
 	        if (tMax.si <= parameters.getParameter(ParameterTypes.TMIN).si)
 	        {
 	            parameters.setParameter(ParameterTypes.TMIN, tMin);

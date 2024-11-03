@@ -28,9 +28,9 @@
     </xi:include>
 
     <ots:LinkTypes>
-      <ots:LinkType Id="FREEWAY">
+      <ots:LinkType Id="HIGHWAY">
         <ots:Compatibility GtuType="NL.VEHICLE" />
-        <ots:SpeedLimit GtuType="NL.CAR" LegalSpeedLimit="130km/h" />
+        <ots:SpeedLimit GtuType="NL.CAR" LegalSpeedLimit="120km/h" />
         <ots:SpeedLimit GtuType="NL.TRUCK" LegalSpeedLimit="90km/h" />
       </ots:LinkType>
       <ots:LinkType Id="LOCAL">
@@ -42,12 +42,12 @@
 
     <ots:RoadLayouts>
 
-      <ots:RoadLayout Id="2LaneFREEWAYWithOnRamp" LinkType="FREEWAY">
+      <ots:RoadLayout Id="2LaneHighwayWithOnRamp" LinkType="HIGHWAY">
         <ots:Stripe Type="SOLID">
           <ots:CenterOffset>10.8m</ots:CenterOffset>
           <ots:DrawingWidth>20cm</ots:DrawingWidth>
         </ots:Stripe>
-        <ots:Lane Id="LEFT" LaneType="NL.FREEWAY">
+        <ots:Lane Id="LEFT" LaneType="NL.HIGHWAY">
           <ots:CenterOffset>9.0m</ots:CenterOffset>
           <ots:Width>3.6m</ots:Width>
         </ots:Lane>
@@ -55,7 +55,7 @@
           <ots:CenterOffset>7.2m</ots:CenterOffset>
           <ots:DrawingWidth>20cm</ots:DrawingWidth>
         </ots:Stripe>
-        <ots:Lane Id="RIGHT" LaneType="NL.FREEWAY">
+        <ots:Lane Id="RIGHT" LaneType="NL.HIGHWAY">
           <ots:CenterOffset>5.4m</ots:CenterOffset>
           <ots:Width>3.6m</ots:Width>
         </ots:Lane>
@@ -63,7 +63,7 @@
           <ots:CenterOffset>3.6m</ots:CenterOffset>
           <ots:DrawingWidth>20cm</ots:DrawingWidth>
         </ots:Stripe>
-        <ots:Lane Id="ONRAMP" LaneType="NL.FREEWAY">
+        <ots:Lane Id="ONRAMP" LaneType="NL.HIGHWAY">
           <ots:CenterOffset>1.8m</ots:CenterOffset>
           <ots:Width>3.6m</ots:Width>
         </ots:Lane>
@@ -73,12 +73,12 @@
         </ots:Stripe>
       </ots:RoadLayout>
 
-      <ots:RoadLayout Id="2LaneFREEWAY" LinkType="FREEWAY">
+      <ots:RoadLayout Id="2LaneHighway" LinkType="HIGHWAY">
         <ots:Stripe Type="SOLID">
           <ots:CenterOffset>7.2m</ots:CenterOffset>
           <ots:DrawingWidth>20cm</ots:DrawingWidth>
         </ots:Stripe>
-        <ots:Lane Id="LEFT" LaneType="NL.FREEWAY">
+        <ots:Lane Id="LEFT" LaneType="NL.HIGHWAY">
           <ots:CenterOffset>5.4m</ots:CenterOffset>
           <ots:Width>3.6m</ots:Width>
         </ots:Lane>
@@ -86,7 +86,7 @@
           <ots:CenterOffset>3.6m</ots:CenterOffset>
           <ots:DrawingWidth>20cm</ots:DrawingWidth>
         </ots:Stripe>
-        <ots:Lane Id="RIGHT" LaneType="NL.FREEWAY">
+        <ots:Lane Id="RIGHT" LaneType="NL.HIGHWAY">
           <ots:CenterOffset>1.8m</ots:CenterOffset>
           <ots:Width>3.6m</ots:Width>
         </ots:Lane>
@@ -96,12 +96,12 @@
         </ots:Stripe>
       </ots:RoadLayout>
 
-      <ots:RoadLayout Id="1LaneOnRamp" LinkType="FREEWAY">
+      <ots:RoadLayout Id="1LaneOnRamp" LinkType="HIGHWAY">
         <ots:Stripe Type="SOLID">
           <ots:CenterOffset>3.6m</ots:CenterOffset>
           <ots:DrawingWidth>20cm</ots:DrawingWidth>
         </ots:Stripe>
-        <ots:Lane Id="ONRAMP" LaneType="NL.FREEWAY">
+        <ots:Lane Id="ONRAMP" LaneType="NL.HIGHWAY">
           <ots:CenterOffset>1.8m</ots:CenterOffset>
           <ots:Width>3.6m</ots:Width>
         </ots:Lane>
@@ -116,7 +116,7 @@
           <ots:CenterOffset>3.6m</ots:CenterOffset>
           <ots:DrawingWidth>20cm</ots:DrawingWidth>
         </ots:Stripe>
-        <ots:Lane Id="ONRAMP" LaneType="NL.FREEWAY">
+        <ots:Lane Id="ONRAMP" LaneType="NL.HIGHWAY">
           <ots:CenterOffset>1.8m</ots:CenterOffset>
           <ots:Width>3.6m</ots:Width>
         </ots:Lane>
@@ -137,19 +137,19 @@
     <ots:Node Id="E" Coordinate="(480, -40)" Direction="0 deg(E)" />
     <ots:Node Id="E2" Coordinate="(500, -40)" Direction="0 deg(E)" />
 
-    <ots:Link Id="AB" NodeStart="A" NodeEnd="B" Type="FREEWAY">
+    <ots:Link Id="AB" NodeStart="A" NodeEnd="B" Type="HIGHWAY">
       <ots:Straight />
-      <ots:DefinedLayout>2LaneFREEWAY</ots:DefinedLayout>
+      <ots:DefinedLayout>2LaneHighway</ots:DefinedLayout>
     </ots:Link>
 
-    <ots:Link Id="BC" NodeStart="B" NodeEnd="C" Type="FREEWAY" OffsetStart="-3.6m" OffsetEnd="-3.6m">
+    <ots:Link Id="BC" NodeStart="B" NodeEnd="C" Type="HIGHWAY" OffsetStart="-3.6m" OffsetEnd="-3.6m">
       <ots:Straight />
-      <ots:DefinedLayout>2LaneFREEWAYWithOnRamp</ots:DefinedLayout>
+      <ots:DefinedLayout>2LaneHighwayWithOnRamp</ots:DefinedLayout>
     </ots:Link>
 
-    <ots:Link Id="CD" NodeStart="C" NodeEnd="D" Type="FREEWAY">
+    <ots:Link Id="CD" NodeStart="C" NodeEnd="D" Type="HIGHWAY">
       <ots:Straight />
-      <ots:DefinedLayout>2LaneFREEWAY</ots:DefinedLayout>
+      <ots:DefinedLayout>2LaneHighway</ots:DefinedLayout>
     </ots:Link>
 
     <ots:Link Id="EE2" NodeStart="E" NodeEnd="E2" Type="LOCAL">
@@ -157,7 +157,7 @@
       <ots:DefinedLayout>1LaneAccesRoad</ots:DefinedLayout>
     </ots:Link>
 
-    <ots:Link Id="E2B" NodeStart="E2" NodeEnd="B" Type="FREEWAY" OffsetEnd="-3.6m">
+    <ots:Link Id="E2B" NodeStart="E2" NodeEnd="B" Type="HIGHWAY" OffsetEnd="-3.6m">
       <ots:Bezier />
       <ots:DefinedLayout>1LaneOnRamp</ots:DefinedLayout>
     </ots:Link>
