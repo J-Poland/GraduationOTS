@@ -82,18 +82,20 @@ public class VehicleAutomationConfigurations extends Defaults implements BiFunct
  	/** Maximum and minimum allowed acceleration. */
 	double maxAcceleration;
 	double minAcceleration;
+	double sensitivityAnalysisValue;
  	
     
     /**
      * Constructor.
      * @throws ParameterException 
      */
-	public VehicleAutomationConfigurations(double maxAcceleration, double minAcceleration) throws ParameterException
+	public VehicleAutomationConfigurations(double maxAcceleration, double minAcceleration, double sensitivityAnalysisValue) throws ParameterException
 	{
 		super(new Locale("nl", "NL"));
 		
 		this.maxAcceleration = maxAcceleration;
 		this.minAcceleration = minAcceleration;
+		this.sensitivityAnalysisValue = sensitivityAnalysisValue;
 		
 		// create GTU types
 		createVehicleTypes();
@@ -191,6 +193,11 @@ public class VehicleAutomationConfigurations extends Defaults implements BiFunct
 				Duration.instantiateSI(1.5),
 				Duration.instantiateSI(1.5),
 				Duration.instantiateSI(1.104)};
+//		Duration[] tMaxValues = {
+//				Duration.instantiateSI(sensitivityAnalysisValue),
+//				Duration.instantiateSI(1.5),
+//				Duration.instantiateSI(1.5),
+//				Duration.instantiateSI(1.104)};
 		
 		// GTU reaction time
 		Duration[] reactionTimeMaxValues = {

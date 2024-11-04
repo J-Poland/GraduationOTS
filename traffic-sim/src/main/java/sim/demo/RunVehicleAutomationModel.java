@@ -48,7 +48,7 @@ public class RunVehicleAutomationModel implements Runnable
     @Option(names = "-roadSideDistraction", description = "Enable distraction at the side of the road.", negatable=false, defaultValue = "false")
     private boolean roadSideDistraction;
     
-    @Option(names = "-sensitivityAnalysisValue", description = "Varying parameter value for sensitivity analysis.", defaultValue = "0")
+    @Option(names = "-sensitivityAnalysisValue", description = "Varying parameter value for sensitivity analysis.", defaultValue = "1.6")
     private double sensitivityAnalysisValue;
     
     

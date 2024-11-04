@@ -288,7 +288,7 @@ public class VehicleAutomationModel extends AbstractOtsModel implements EventLis
             loadNetwork();
             
             // load vehicle automation level GTUs with acceleration limits
-            vehicleConfig = new VehicleAutomationConfigurations(maxAcceleration, minAcceleration);
+            vehicleConfig = new VehicleAutomationConfigurations(maxAcceleration, minAcceleration, sensitivityAnalysisValue);
             
             // select and configure driving models
             buildVehicleAutomationModel();
