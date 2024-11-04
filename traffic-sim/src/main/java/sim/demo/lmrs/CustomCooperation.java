@@ -35,6 +35,55 @@ import sim.demo.vehicleconfigurations.VehicleBehaviourTowardsOthers.LaneChanging
  */
 public interface CustomCooperation extends Cooperation
 {
+	/** Simple passive cooperation. */
+    Cooperation PASSIVE = new Cooperation()
+    {
+        /** {@inheritDoc} */
+        @Override
+        public Acceleration cooperate(final LanePerception perception, final Parameters params, final SpeedLimitInfo sli,
+                final CarFollowingModel cfm, final LateralDirectionality lat, final Desire ownDesire)
+                throws ParameterException, OperationalPlanException
+        {
+            if (!perception.getLaneStructure().exists(lat.isRight() ? RelativeLane.RIGHT : RelativeLane.LEFT))
+            {
+                return new Acceleration(Double.MAX_VALUE, AccelerationUnit.SI);
+            }
+            Acceleration b = params.getParameter(ParameterTypes.B);
+            Acceleration a = new Acceleration(Double.MAX_VALUE, AccelerationUnit.SI);
+            double dCoop = params.getParameter(DCOOP);
+            Speed ownSpeed = perception.getPerceptionCategory(EgoPerception.class).getSpeed();
+            RelativeLane relativeLane = new RelativeLane(lat, 1);
+            for (HeadwayGtu leader : perception.getPerceptionCategory(NeighborsPerception.class).getLeaders(relativeLane))
+            {
+                Parameters params2 = leader.getParameters();
+                double desire = lat.equals(LateralDirectionality.LEFT) ? params2.getParameter(DRIGHT)
+                        : lat.equals(LateralDirectionality.RIGHT) ? params2.getParameter(DLEFT) : 0;
+                
+             // add laneChangeBehaviour class to adjust vehicle interactions
+            	LaneChangingBehavior laneChangeBehavior = null;
+				laneChangeBehavior = new LaneChangingBehavior(perception.getGtu());
+                
+                // adjust DCOOP value according to leader type
+                if (laneChangeBehavior != null) {
+                	double adjustment = laneChangeBehavior.adaptToLaneChangingVehicle(leader);
+                	if (desire >= (dCoop + adjustment) && (leader.getSpeed().gt0() || leader.getDistance().gt0()))
+                    {
+                        Acceleration aSingle = LmrsUtil.singleAcceleration(leader.getDistance(), ownSpeed, leader.getSpeed(),
+                                desire, params, sli, cfm);
+                        a = Acceleration.min(a, aSingle);
+                    }
+                }
+            }
+            return Acceleration.max(a, b.neg());
+        }
+
+        /** {@inheritDoc} */
+        @Override
+        public String toString()
+        {
+            return "PASSIVE";
+        }
+    };
 
     /** Same as passive cooperation, except that cooperation is fully ignored if the potential lane changer brakes heavily. */
     Cooperation PASSIVE_MOVING = new Cooperation()

@@ -21,7 +21,7 @@ public class RunVehicleAutomationModel implements Runnable
     @Option(names = "-warmUpTime", description = "Simulation warm-up time.", defaultValue = "200.0")
     private double warmUpTime;
 	
-    @Option(names = "-sampleTime", description = "Simulation time for sampling data.", defaultValue = "1000.0")
+    @Option(names = "-sampleTime", description = "Simulation time for sampling data.", defaultValue = "1200.0")
     private double sampleTime;
 
     @Option(names = "-level0Fraction", description = "Fraction of level 0 vehicles.", defaultValue = "0.25")
@@ -36,10 +36,10 @@ public class RunVehicleAutomationModel implements Runnable
     @Option(names = "-level3Fraction", description = "Fraction of level 3 vehicles.", defaultValue = "0.25")
     private double level3Fraction;
     
-    @Option(names = "-mainDemand", description = "Traffic demand on main road.", defaultValue = "2000") // 2000
+    @Option(names = "-mainDemand", description = "Traffic demand on main road.", defaultValue = "3400") // 2000
     private double mainDemand;
     
-    @Option(names = "-rampDemand", description = "Traffic demand for on-ramp.", defaultValue = "400") // 400
+    @Option(names = "-rampDemand", description = "Traffic demand for on-ramp.", defaultValue = "325") // 400
     private double rampDemand;
     
     @Option(names = "-inVehicleDistraction", description = "Enable in-vehicle distraction from secondary tasks.", negatable=false, defaultValue = "true")
