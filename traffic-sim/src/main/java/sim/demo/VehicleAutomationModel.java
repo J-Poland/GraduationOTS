@@ -199,7 +199,7 @@ public class VehicleAutomationModel extends AbstractOtsModel implements EventLis
  	/** Cooperation. 
  	 *  Custom class to adapt cooperation threshold of level 0 vehicles based on their surroundings.
  	 */
- 	static final Cooperation cooperationMethod = CustomCooperation.PASSIVE_MOVING;
+ 	static final Cooperation cooperationMethod = CustomCooperation.PASSIVE;
  	
  	/** GapAcceptance. */
  	static final GapAcceptance gapAcceptanceMethod= GapAcceptance.INFORMED;

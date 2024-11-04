@@ -347,8 +347,8 @@ public class ExportSimulationOutput
             	// headers
             	if (i == -1) {
 	    			rowValues.add("time");
-            		rowValues.add("id");
-            		rowValues.add("type");
+            		rowValues.add("gtu_id");
+            		rowValues.add("gtu_type");
 					rowValues.add("leader_id");
 	            	rowValues.add("leader_type");
             	}
