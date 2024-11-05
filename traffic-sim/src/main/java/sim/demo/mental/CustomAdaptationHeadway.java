@@ -54,9 +54,9 @@ public class CustomAdaptationHeadway extends AdaptationHeadway
 	        // only adapt when the GTU is surrounded by level 3
 	        if (inBetweenLevel3) {
 		        Duration tMinLevel3 = parameters.getParameter(VehicleAutomationConfigurations.TMIN_LEVEL3);
-	        	double socio = parameters.getParameter(LmrsParameters.SOCIO);
+	        	double socio_cf = parameters.getParameter(VehicleAutomationConfigurations.SOCIO_CF);
 	        	// interpolating between tMin and tMinLevel3 based on socio parameter
-	            tMin = tMin.times(1 - socio).plus(tMinLevel3.times(socio));
+	            tMin = tMin.times(1 - socio_cf).plus(tMinLevel3.times(socio_cf));
 	        }
 	        
 	        

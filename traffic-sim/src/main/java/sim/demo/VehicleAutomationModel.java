@@ -821,6 +821,7 @@ public class VehicleAutomationModel extends AbstractOtsModel implements EventLis
         	gtuData.put("turn_indicator", "");
         	gtuData.put("link", "");
         	gtuData.put("lane", "");
+        	gtuData.put("follower_gtu_id", "");
         	gtuData.put("leader_gtu_id", "");
         	gtuData.put("leader_gtu_type", "");
         	gtuData.put("headway_distance", "");
@@ -909,6 +910,7 @@ public class VehicleAutomationModel extends AbstractOtsModel implements EventLis
     	gtuData.put("turn_indicator", turnIndicator);
     	gtuData.put("link", link);
     	gtuData.put("lane", lane);
+    	gtuData.put("follower_gtu_id", headwayInfo.getFollowerGtuId());
     	gtuData.put("leader_gtu_id", headwayInfo.getLeaderGtuId());
     	gtuData.put("leader_gtu_type", headwayInfo.getLeaderGtuType());
     	gtuData.put("headway_distance", Double.toString(headwayInfo.getHeadwayDistance()));
@@ -1332,13 +1334,16 @@ public class VehicleAutomationModel extends AbstractOtsModel implements EventLis
     /** Class for headway info */
     private class HeadwayInfo {
     	
-    	// headway variables
+    	// headway leader variables
     	private String gtuType = null;
     	private String leaderGtuId = null;
     	private String leaderGtuType = null;
         private double headwayDistance = Double.NaN;
         private double headwayTime = Double.NaN;
         private double timeToCollision = Double.NaN;
+        
+        // follower
+        private String followerGtuId = null;
         
         // headway info constructor
         public HeadwayInfo(LaneBasedGtu gtu) {
@@ -1373,6 +1378,13 @@ public class VehicleAutomationModel extends AbstractOtsModel implements EventLis
 			            }
 		            }
 	        	}
+	        	
+	        	// get follower vehicle
+	        	PerceptionCollectable<HeadwayGtu,LaneBasedGtu> perceptionCollectableFollowers = neighborPerception.getFollowers(RelativeLane.CURRENT);
+	        	HeadwayGtu follower = perceptionCollectableFollowers.first();
+	        	if (follower != null) {
+	        		this.followerGtuId = follower.getId();
+	        	}
 	        }
         }
         
@@ -1400,6 +1412,10 @@ public class VehicleAutomationModel extends AbstractOtsModel implements EventLis
         public double getTtc() {
             return timeToCollision;
         }
+        
+        public String getFollowerGtuId() {
+            return followerGtuId;
+        }
 
         @Override
         public String toString() {
@@ -1410,6 +1426,7 @@ public class VehicleAutomationModel extends AbstractOtsModel implements EventLis
                    ", headwayDistance=" + headwayDistance +
                    ", headwayTime=" + headwayTime +
                    ", ttc=" + timeToCollision +
+                   ", followerGtuId=" + followerGtuId +
                    "}";
         }
     }
