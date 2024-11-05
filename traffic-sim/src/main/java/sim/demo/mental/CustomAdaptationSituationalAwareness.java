@@ -43,8 +43,10 @@ public class CustomAdaptationSituationalAwareness extends AdaptationSituationalA
                 : (taskSaturation >= tsMax ? saMin : saMax - (saMax - saMin) * (taskSaturation - tsCrit) / (tsMax - tsCrit));
         parameters.setParameter(SA, sa);
         // reaction time
+        double trMin = parameters.getParameterOrNull(VehicleAutomationConfigurations.MIN_TR).si;
         double trMax = parameters.getParameterOrNull(VehicleAutomationConfigurations.MAX_TR).si;
-        parameters.setParameter(ParameterTypes.TR, Duration.instantiateSI(trMax * (saMax - sa)));
+        parameters.setParameter(ParameterTypes.TR, Duration.instantiateSI(trMin + (trMax - trMin) * (saMax - sa)));
+//        parameters.setParameter(ParameterTypes.TR, Duration.instantiateSI(trMax * (saMax - sa)));
     }
 
 }

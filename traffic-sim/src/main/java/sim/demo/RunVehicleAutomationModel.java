@@ -24,16 +24,16 @@ public class RunVehicleAutomationModel implements Runnable
     @Option(names = "-sampleTime", description = "Simulation time for sampling data.", defaultValue = "1200.0")
     private double sampleTime;
 
-    @Option(names = "-level0Fraction", description = "Fraction of level 0 vehicles.", defaultValue = "0.25")
+    @Option(names = "-level0Fraction", description = "Fraction of level 0 vehicles.", defaultValue = "1.0")
     private double level0Fraction;
     
-    @Option(names = "-level1Fraction", description = "Fraction of level 1 vehicles.", defaultValue = "0.25")
+    @Option(names = "-level1Fraction", description = "Fraction of level 1 vehicles.", defaultValue = "0.0")
     private double level1Fraction;
     
-    @Option(names = "-level2Fraction", description = "Fraction of level 2 vehicles.", defaultValue = "0.25")
+    @Option(names = "-level2Fraction", description = "Fraction of level 2 vehicles.", defaultValue = "0.0")
     private double level2Fraction;
     
-    @Option(names = "-level3Fraction", description = "Fraction of level 3 vehicles.", defaultValue = "0.25")
+    @Option(names = "-level3Fraction", description = "Fraction of level 3 vehicles.", defaultValue = "0.0")
     private double level3Fraction;
     
     @Option(names = "-mainDemand", description = "Traffic demand on main road.", defaultValue = "3400") // 2000

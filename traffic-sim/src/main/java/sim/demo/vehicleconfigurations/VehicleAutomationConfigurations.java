@@ -47,6 +47,7 @@ public class VehicleAutomationConfigurations extends Defaults implements BiFunct
 	public static final ParameterTypeString AUTOMATION_LEVEL = new ParameterTypeString("AUTOMATION_LEVEL", "Automation level of vehicle.");
     public static final ParameterTypeString ORIGIN = new ParameterTypeString("ORIGIN", "Node on which the GTU was generated.");
     public static final ParameterTypeDuration INITIAL_TMIN = new ParameterTypeDuration("INITIAL_TMIN", "Initial minimal headway time.");
+    public static final ParameterTypeDuration MIN_TR = new ParameterTypeDuration("MIN_TR", "Custom parameter for minimum reaction time.");
     public static final ParameterTypeDuration MAX_TR = new ParameterTypeDuration("MAX_TR", "Custom parameter for maximum reaction time.");
     public static final ParameterTypeDouble SOCIO_CF = new ParameterTypeDouble("SOCIO_CF", "Social parameter for car-following.");
     public static final ParameterTypeDouble CF_TASK_DEMAND = new ParameterTypeDouble("CF_TASK_DEMAND", "Car-following cognitive task demand.");
@@ -200,8 +201,13 @@ public class VehicleAutomationConfigurations extends Defaults implements BiFunct
 //				Duration.instantiateSI(1.104)};
 		
 		// GTU reaction time
+		Duration[] reactionTimeMinValues = {
+				Duration.instantiateSI(0.17),
+				Duration.instantiateSI(0.0),
+				Duration.instantiateSI(0.0),
+				Duration.instantiateSI(0.0)};
 		Duration[] reactionTimeMaxValues = {
-				Duration.instantiateSI(2.0),
+				Duration.instantiateSI(3.32),
 				Duration.instantiateSI(0.0),
 				Duration.instantiateSI(0.0),
 				Duration.instantiateSI(0.0)};
@@ -240,6 +246,7 @@ public class VehicleAutomationConfigurations extends Defaults implements BiFunct
 			paramFactory.addParameter(gtuType, INITIAL_TMIN, tMinValues[i]);
 			// reaction time (and simulation steps)
 			paramFactory.addParameter(gtuType, ParameterTypes.TR, ParameterTypes.TR.getDefaultValue());
+			paramFactory.addParameter(gtuType, MIN_TR, reactionTimeMinValues[i]);
 			paramFactory.addParameter(gtuType, MAX_TR, reactionTimeMaxValues[i]);
 			paramFactory.addParameter(gtuType, ParameterTypes.DT, ParameterTypes.DT.getDefaultValue());
 			// LMRS
