@@ -33,10 +33,8 @@ public class VehicleBehaviourTowardsOthers {
     		this.gtu = gtu;
     	}
     	
-    	public Double adaptToLaneChangingVehicle(double dCoop, HeadwayGtu leaderGtu) throws ParameterException
+    	public Double adaptToLaneChangingVehicle(HeadwayGtu leaderGtu) throws ParameterException
     	{
-    		// set max lane change desire
-    		double dMax = 1.0;
             // get own gtu type string
             String thisType = gtu.getParameters().getParameterOrNull(VehicleAutomationConfigurations.AUTOMATION_LEVEL);
     		// create string from leader vehicle type
@@ -45,9 +43,9 @@ public class VehicleBehaviourTowardsOthers {
             // example of GTU type string: "GtuType: NL.LEVEL3CAR"
             if (thisType.contains("LEVEL0") && leaderType.contains("LEVEL3")) {
             	double social_lc = gtu.getParameters().getParameter(LmrsParameters.SOCIO);
-            	return dCoop + (dMax - dCoop) * social_lc;
+            	return social_lc;
             }
-            // interaction between other vehicles? return 0.0
+            // not found? return 0.0, no influence from traffic
             else {
             	return 0.0;
             }
