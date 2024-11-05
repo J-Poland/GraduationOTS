@@ -65,8 +65,8 @@ public interface CustomCooperation extends Cooperation
                 
                 // adjust DCOOP value according to leader type
                 if (laneChangeBehavior != null) {
-                	double adjustment = laneChangeBehavior.adaptToLaneChangingVehicle(dCoop, leader);
-                	if (desire >= (dCoop + adjustment) && (leader.getSpeed().gt0() || leader.getDistance().gt0()))
+                	double dCoopAdjusted = laneChangeBehavior.adaptToLaneChangingVehicle(dCoop, leader);
+                	if (desire >= dCoopAdjusted && (leader.getSpeed().gt0() || leader.getDistance().gt0()))
                     {
                         Acceleration aSingle = LmrsUtil.singleAcceleration(leader.getDistance(), ownSpeed, leader.getSpeed(),
                                 desire, params, sli, cfm);

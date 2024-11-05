@@ -36,7 +36,8 @@ public class VehicleBehaviourTowardsOthers {
     	public Double adaptToLaneChangingVehicle(double dCoop, HeadwayGtu leaderGtu) throws ParameterException
     	{
     		// set max lane change desire
-    		double dMax = 1.0;
+    		double dCoopMin = dCoop * 0.9;
+    		double dCoopMax = dCoop * 1.1;
             // get own gtu type string
             String thisType = gtu.getParameters().getParameterOrNull(VehicleAutomationConfigurations.AUTOMATION_LEVEL);
     		// create string from leader vehicle type
@@ -44,12 +45,12 @@ public class VehicleBehaviourTowardsOthers {
             // change behaviour parameter value if other GTU is of type level-3 and this GTU is level-0
             // example of GTU type string: "GtuType: NL.LEVEL3CAR"
             if (thisType.contains("LEVEL0") && leaderType.contains("LEVEL3")) {
-            	double social_lc = gtu.getParameters().getParameter(LmrsParameters.SOCIO);
-            	return dCoop + (dMax - dCoop) * social_lc;
+            	double social_cf = gtu.getParameters().getParameter(VehicleAutomationConfigurations.SOCIO_CF);
+            	return dCoopMin + (dCoopMax - dCoopMin) * (1 - social_cf);
             }
             // interaction between other vehicles? return 0.0
             else {
-            	return 0.0;
+            	return dCoop;
             }
     	}
     }
