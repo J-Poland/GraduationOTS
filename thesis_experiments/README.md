@@ -1,6 +1,6 @@
 # README File
 
-Last updated: 2024 - 08 - 01
+Last updated: 2024 - 11 - 29
 
 Created by: Jesse Poland
 
@@ -33,18 +33,18 @@ Within this project, EMA_Workbench is used to run OTS models by setting their pa
 ├── experiment_runs                         <- Scripts to run the OTS model with specific parameters for experiments
 │   └── `policy_runs.py`
 │
-├── notebooks                               <- Jupyter notebooks
-│   ├──
+├── notebooks                               <- Jupyter notebooks for data analysis
+│   ├── ...
 │
 ├── open_exploration                        <- Scripts to explore and analyse the OTS model
-│   ├──
+│   ├── ...
 │
 ├── ots_models                              <- Scripts containing OTS models and the Java manager
 │   ├── `java_manager.py`
 │   └── `ots_vehicle_automation_model.py`
 │                         
 ├── test                                    <- Scripts to test individual code
-│   ├──
+│   ├── ...
 │
 ├── `requirements.txt`                      <- File with the Python package dependencies to install in your environment
 │

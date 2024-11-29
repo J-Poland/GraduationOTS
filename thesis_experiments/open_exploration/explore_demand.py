@@ -84,8 +84,8 @@ def create_model(_seed):
         _policies = add_levers_to_policies(_policies, lhs_samples_dict, samples_per_parameter)
 
     # define uncertain variables
-    _ema_model.uncertainties = [RealParameter('main_demand', 2000, 4000),
-                                RealParameter('ramp_demand', 200, 800)]
+    _ema_model.uncertainties = [RealParameter('main_demand', 2000, 5000),
+                                RealParameter('ramp_demand', 200, 1000)]
 
     # list outcome variables of interest
     _ema_model.outcomes = [ScalarOutcome('collisions'),
@@ -101,7 +101,7 @@ if __name__ == '__main__':
 
     # experiment name and number
     experiment_string = 'explore_demand'
-    experiment_number = 1
+    experiment_number = 5
     experiment_name = f'{experiment_string}_{experiment_number}'
 
     # create folder for experiment results
@@ -126,7 +126,7 @@ if __name__ == '__main__':
     ema_seed = 0
     model_seeds = [0, 1, 2, 3]
     # select scenarios per policy
-    num_scenarios = 20
+    num_scenarios = 40
     for seed in model_seeds:
         print('\n'
               f'{datetime.now().time().strftime("%H:%M:%S")}: '

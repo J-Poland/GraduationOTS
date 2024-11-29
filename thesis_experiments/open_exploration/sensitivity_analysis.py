@@ -37,7 +37,7 @@ class DualLogger:
 # function to create valid policies
 def define_policies():
     return [
-        Policy('Policy 1', **{'level0_fraction': 1.0, 'level1_fraction': 0, 'level2_fraction': 0, 'level3_fraction': 0,
+        Policy('Policy 1', **{'level0_fraction': 0.25, 'level1_fraction': 0.25, 'level2_fraction': 0.25, 'level3_fraction': 0.25,
                               'in_vehicle_distraction': True, 'road_side_distraction': False}),
     ]
 
@@ -68,11 +68,10 @@ def create_model(_seed):
     _policies = define_policies()
 
     # define model constants
-    _ema_model.constants = [Constant('warm_up_time', 200),
-                            Constant('sample_time', 1800),
-                            Constant('sensitivity_analysis_value', 0),
-                            Constant('main_demand', 2000),
-                            Constant('ramp_demand', 400)
+    _ema_model.constants = [Constant('warm_up_time', 500),
+                            Constant('sample_time', 1200),
+                            Constant('main_demand', 3400),
+                            Constant('ramp_demand', 325)
                             ]  # 28800 = 8 hours of traffic simulation, 1800 = 30 min
 
     # define levers outside of policies
@@ -86,7 +85,7 @@ def create_model(_seed):
         _policies = add_levers_to_policies(_policies, lhs_samples_dict, samples_per_parameter)
 
     # define uncertain variables
-    _ema_model.uncertainties = []
+    _ema_model.uncertainties = [RealParameter('sensitivity_analysis_value', 0.4, 0.6),]
 
     # list outcome variables of interest
     _ema_model.outcomes = [ScalarOutcome('collisions'),
@@ -101,9 +100,9 @@ def create_model(_seed):
 if __name__ == '__main__':
 
     # experiment name and number
-    variable = 'reaction_time'
+    variable = 'B0'
     experiment_string = f'{variable}_sensitivity_run'
-    experiment_number = 1
+    experiment_number = 2
     experiment_name = f'{experiment_string}_{experiment_number}'
 
     # create folder for experiment results
@@ -126,9 +125,9 @@ if __name__ == '__main__':
     # run the traffic simulation for multiple seeds
     # (but ensure that the selection of uncertainty/levers values is not affected)
     ema_seed = 0
-    model_seeds = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+    model_seeds = [0, 1, 2, 3, 4, 5, 6, 7]
     # select scenarios per policy
-    num_scenarios = 1
+    num_scenarios = 10
     for seed in model_seeds:
         print('\n'
               f'{datetime.now().time().strftime("%H:%M:%S")}: '

@@ -32,8 +32,7 @@ class VehicleAutomationModel:
                                    r'\traffic-sim\src\main\java\sim\demo'
 
         # output data folder
-        self.output_parent_folder = r'C:\Users\jesse\Documents\Java\TrafficSimulation-workspace' \
-                                    r'\traffic-sim\src\main\resources'
+        self.output_parent_folder = r'F:\jesse_sim_results'
         self.output_folder = None
         self.generate_output_folder()
 
