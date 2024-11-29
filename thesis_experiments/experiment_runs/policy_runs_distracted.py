@@ -38,29 +38,29 @@ class DualLogger:
 def define_policies():
     return [
         Policy('Policy 0', **{'level0_fraction': 1.0, 'level1_fraction': 0, 'level2_fraction': 0, 'level3_fraction': 0,
-                              'in_vehicle_distraction': True, 'road_side_distraction': False}),
+                              'in_vehicle_distraction': True, 'road_side_distraction': True}),
         Policy('Policy 1', **{'level0_fraction': 0, 'level1_fraction': 1.0, 'level2_fraction': 0, 'level3_fraction': 0,
-                              'in_vehicle_distraction': True, 'road_side_distraction': False}),
+                              'in_vehicle_distraction': True, 'road_side_distraction': True}),
         Policy('Policy 2', **{'level0_fraction': 0, 'level1_fraction': 0, 'level2_fraction': 1.0, 'level3_fraction': 0,
-                              'in_vehicle_distraction': True, 'road_side_distraction': False}),
+                              'in_vehicle_distraction': True, 'road_side_distraction': True}),
         Policy('Policy 3', **{'level0_fraction': 0, 'level1_fraction': 0, 'level2_fraction': 0, 'level3_fraction': 1.0,
-                              'in_vehicle_distraction': True, 'road_side_distraction': False}),
+                              'in_vehicle_distraction': True, 'road_side_distraction': True}),
         Policy('Policy 4', **{'level0_fraction': 0.5, 'level1_fraction': 0, 'level2_fraction': 0, 'level3_fraction': 0.5,
-                                'in_vehicle_distraction': True, 'road_side_distraction': False}),
+                                'in_vehicle_distraction': True, 'road_side_distraction': True}),
         Policy('Policy 5', **{'level0_fraction': 0.8, 'level1_fraction': 0.2, 'level2_fraction': 0, 'level3_fraction': 0,
-                              'in_vehicle_distraction': True, 'road_side_distraction': False}),
+                              'in_vehicle_distraction': True, 'road_side_distraction': True}),
         Policy('Policy 6', **{'level0_fraction': 0.6, 'level1_fraction': 0.2, 'level2_fraction': 0.2, 'level3_fraction': 0,
-                              'in_vehicle_distraction': True, 'road_side_distraction': False}),
+                              'in_vehicle_distraction': True, 'road_side_distraction': True}),
         Policy('Policy 7', **{'level0_fraction': 0.4, 'level1_fraction': 0.2, 'level2_fraction': 0.2, 'level3_fraction': 0.2,
-                              'in_vehicle_distraction': True, 'road_side_distraction': False}),
+                              'in_vehicle_distraction': True, 'road_side_distraction': True}),
         Policy('Policy 8', **{'level0_fraction': 0.25, 'level1_fraction': 0.25, 'level2_fraction': 0.25, 'level3_fraction': 0.25,
-                              'in_vehicle_distraction': True, 'road_side_distraction': False}),
+                              'in_vehicle_distraction': True, 'road_side_distraction': True}),
         Policy('Policy 9', **{'level0_fraction': 0, 'level1_fraction': 0.33, 'level2_fraction': 0.33, 'level3_fraction': 0.33,
-                              'in_vehicle_distraction': True, 'road_side_distraction': False}),
+                              'in_vehicle_distraction': True, 'road_side_distraction': True}),
         Policy('Policy 10', **{'level0_fraction': 0, 'level1_fraction': 0., 'level2_fraction': 0.5, 'level3_fraction': 0.5,
-                              'in_vehicle_distraction': True, 'road_side_distraction': False}),
+                              'in_vehicle_distraction': True, 'road_side_distraction': True}),
         Policy('Policy 11', **{'level0_fraction': 0, 'level1_fraction': 0, 'level2_fraction': 0.2, 'level3_fraction': 0.8,
-                               'in_vehicle_distraction': True, 'road_side_distraction': False}),
+                               'in_vehicle_distraction': True, 'road_side_distraction': True}),
     ]
 
 
@@ -122,8 +122,8 @@ def create_model(_seed):
 if __name__ == '__main__':
 
     # experiment name and number
-    experiment_string = 'policy_run'
-    experiment_number = 2
+    experiment_string = 'policy_run_distraction'
+    experiment_number = 1
     experiment_name = f'{experiment_string}_{experiment_number}'
 
     # create folder for experiment results
